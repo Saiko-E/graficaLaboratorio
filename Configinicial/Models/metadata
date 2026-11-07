@@ -1,0 +1,243 @@
+{
+	"assetNamespace": "fab",
+	"listing":
+	{
+		"averageRating": 0,
+		"createdAt": "",
+		"description": "<p><span><strong>Ninja Star Shuriken</strong></span><br><br><span>Add a classic ninja weapon to your game or fantasy project with this Ninja Star Shuriken. Featuring a sharp four-point star silhouette, a central grip hole, and a weathered dark steel finish, this weapon has a rugged, battle-worn appearance suitable for action-packed environments.</span></p><p><span>Designed for ninja-themed games, RPGs, action-adventure projects, and stylized weapon collections, this shuriken works well as a collectible weapon, enemy equipment, inventory item, or environmental prop.</span></p><span>Key Features</span><ul><li><p><span>Four-point ninja star design</span></p></li><li><p><span>Weathered dark steel material appearance</span></p></li><li><p><span>Central grip hole detail</span></p></li><li><p><span>Scratched and worn metallic surface</span></p></li><li><p><span>Suitable for ninja, action, and fantasy themes</span></p></li><li><p><span>Ideal for game scenes, weapon collections, and cinematic renders</span></p></li></ul><p><span><strong>Suggested Uses:</strong> Ninja games, RPGs, action-adventure projects, fantasy environments, weapon displays, and cinematic scenes.</span></p>",
+		"isAiForbidden": false,
+		"isAiGenerated": false,
+		"lastUpdatedAt": "",
+		"listingType": "3d-model",
+		"media": "https://media.fab.com/image_previews/gallery_images/9beb1d62-da91-47a7-8bee-898e280553e4/b638651b-ae5c-446c-936a-587255b93844.jpg",
+		"publishedAt": "2026-10-25T00:53:02.892946Z",
+		"reviewCount": 0,
+		"thumbnail": "https://media.fab.com/image_previews/gallery_images/962f0b2f-39a3-4a4a-86eb-b4777027e3bd/566d2ab7-8283-4039-bbb0-85eec8ce27cd.jpg",
+		"title": "Ninja Star Shuriken",
+		"uid": "66d2bd45-74cb-4eb2-b3d1-dfc461eedbb7",
+		"updatedAt": "",
+		"user":
+		{
+			"coverImageUrl": "",
+			"profileImageUrl": "https://cdn1.epicgames.com/fab/seller/o-p8svwc6hs499dhaxqmm2jczhxddve2/profile/c6cb2230.png",
+			"sellerName": "Deepanshu",
+			"uid": "e79c6bf8-c8dc-4368-ad84-c975cbc0f54f"
+		},
+		"tags": [
+			{
+				"name": "Pbr",
+				"slug": "pbr",
+				"uid": "080edd3b-d10a-4f32-ace2-30f5baa480dc"
+			},
+			{
+				"name": "Star",
+				"slug": "star",
+				"uid": "116576db-c1f8-428b-96a2-1ed1f7458f92"
+			},
+			{
+				"name": "Action",
+				"slug": "action",
+				"uid": "232d8129-95ee-4dfe-9362-9cd5a3287b9a"
+			},
+			{
+				"name": "Weaponry",
+				"slug": "weaponry",
+				"uid": "3a2248c7-0e32-4810-8c69-1b92b2f8641c"
+			},
+			{
+				"name": "Lowpoly",
+				"slug": "lowpoly",
+				"uid": "451806dc-649e-43b7-9c2e-a54485de14b6"
+			},
+			{
+				"name": "Wargame",
+				"slug": "wargame",
+				"uid": "48c84aa2-6d1f-44c0-a818-f3042231bc4b"
+			},
+			{
+				"name": "Metal",
+				"slug": "metal",
+				"uid": "55165238-19a2-4184-85f1-e8650bd2a38d"
+			},
+			{
+				"name": "Steel",
+				"slug": "steel",
+				"uid": "5bd69d4a-ba51-4523-ad8a-ec3b58a8b310"
+			},
+			{
+				"name": "Fantasy",
+				"slug": "fantasy",
+				"uid": "5c48e966-39f9-4b98-9803-78335e942570"
+			},
+			{
+				"name": "Gameready",
+				"slug": "gameready",
+				"uid": "6a250196-0821-43cb-b9cd-3975f235b88d"
+			},
+			{
+				"name": "Minimalist",
+				"slug": "minimalist",
+				"uid": "73ac9f9a-794d-42f4-8873-f2e4d9e003a3"
+			},
+			{
+				"name": "Medieval",
+				"slug": "medieval",
+				"uid": "8869d28f-20ec-4f2e-9e92-d505e24c701d"
+			},
+			{
+				"name": "Realistic",
+				"slug": "realistic",
+				"uid": "93b0d3f1-a96c-4d68-9d44-69a313519e32"
+			},
+			{
+				"name": "Grunge",
+				"slug": "grunge",
+				"uid": "ac954825-7cee-4d92-b13f-ee07f0b1eee0"
+			},
+			{
+				"name": "Shinobi",
+				"slug": "shinobi",
+				"uid": "acb5db5e-9f71-4460-a8ff-4ba68dc87ed9"
+			},
+			{
+				"name": "Ninja",
+				"slug": "ninja",
+				"uid": "af5f492c-7358-437a-b8f4-176eb27e662f"
+			},
+			{
+				"name": "Shuriken",
+				"slug": "shuriken",
+				"uid": "b9862e92-6119-45b1-932c-39feb1b5a535"
+			},
+			{
+				"name": "Prop",
+				"slug": "prop",
+				"uid": "c4f4f70b-31aa-41e7-b857-70631ffdeb3f"
+			},
+			{
+				"name": "Weapon",
+				"slug": "weapon",
+				"uid": "cb5288be-1972-4807-9f2a-5f33ddffd407"
+			},
+			{
+				"name": "Metallic",
+				"slug": "metallic",
+				"uid": "d5b82134-c49f-443e-8b37-7847c2bd3605"
+			},
+			{
+				"name": "Dark",
+				"slug": "dark",
+				"uid": "de612541-c162-41aa-9d0f-b25838ef6303"
+			},
+			{
+				"name": "Ancient",
+				"slug": "ancient",
+				"uid": "f0419e2c-b888-4e2d-8713-61c203152231"
+			},
+			{
+				"name": "Victorian",
+				"slug": "victorian",
+				"uid": "f5815f31-6e69-45cf-9e3e-292686e0045d"
+			}
+		],
+		"category":
+		{
+			"name": "Armas arrojadizas",
+			"path": "weapons-combat/throwing-weapons",
+			"slug": "weapons-combat--throwing-weapons",
+			"uid": "2c3c43e4-db0c-4d0b-add5-ee489426c431"
+		},
+		"assetFormats": [
+			{
+				"assetFormatType":
+				{
+					"name": "Blender",
+					"groupName": "Formatos DCC para 3D",
+					"code": "blender",
+					"icon": "blender",
+					"extensions": [
+						"blend"
+					]
+				}
+			},
+			{
+				"assetFormatType":
+				{
+					"name": "USD",
+					"groupName": "Formatos de intercambio 3D",
+					"code": "usd",
+					"icon": "cube",
+					"extensions": [
+						"usd"
+					]
+				}
+			},
+			{
+				"assetFormatType":
+				{
+					"name": "FBX",
+					"groupName": "Formatos de intercambio 3D",
+					"code": "fbx",
+					"icon": "cube",
+					"extensions": [
+						"fbx"
+					]
+				}
+			},
+			{
+				"assetFormatType":
+				{
+					"name": "GLB",
+					"groupName": "Formatos de intercambio 3D",
+					"code": "glb",
+					"icon": "cube",
+					"extensions": [
+						"glb"
+					]
+				}
+			},
+			{
+				"assetFormatType":
+				{
+					"name": "OBJ",
+					"groupName": "Formatos de intercambio 3D",
+					"code": "obj",
+					"icon": "cube",
+					"extensions": [
+						"obj"
+					]
+				}
+			},
+			{
+				"assetFormatType":
+				{
+					"name": "Archivos adicionales",
+					"groupName": "Otros formatos",
+					"code": "additional-files",
+					"icon": "file",
+					"extensions": [
+						"zip"
+					]
+				}
+			}
+		],
+		"_PluginMetas":
+		{
+			"apiDataVersion": "0.0.1",
+			"entitlementUid": "9117c65c-2389-4102-9e0c-071f66131016",
+			"cacheSize": 0,
+			"downloaded": []
+		}
+	},
+	"target": "",
+	"quality": "",
+	"format": "obj",
+	"fileId": "cf91a392-c62c-487b-a388-cd6ffc1d696d",
+	"platformIncluded": "",
+	"distributionPointBaseUrls": [],
+	"distributionMethod": "",
+	"entitlementUid": "9117c65c-2389-4102-9e0c-071f66131016",
+	"invertedNormal": false,
+	"isConverted": false,
+	"isQuixel": false
+}

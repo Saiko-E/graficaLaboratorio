@@ -1,0 +1,206 @@
+newmtl Material.017
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.017.png
+
+newmtl Material.010
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.010.png
+
+newmtl Material.009
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.009.png
+
+newmtl Material.018
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.018.png
+
+newmtl Material.019
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.019.png
+
+newmtl Material.059
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.059.png
+
+newmtl Material.057
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.057.png
+
+newmtl Material.025
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.025.png
+
+newmtl Material.026
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.026.png
+
+newmtl Material.058
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.058.png
+
+newmtl Material.051
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.051.png
+
+newmtl Material.052
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.052.png
+
+newmtl Material.053
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.053.png
+
+newmtl Material.054
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.054.png
+
+newmtl Material.055
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.055.png
+
+newmtl Material.049
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.049.png
+
+newmtl Material.050
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.050.png
+
+newmtl Material.056
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.056.png
+
+newmtl Material.015
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.015.png
+
+newmtl Material.014
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.014.png
+
+newmtl Material.013
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.013.png
+
+newmtl Material.023
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.023.png
+
+newmtl Material.024
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.024.png

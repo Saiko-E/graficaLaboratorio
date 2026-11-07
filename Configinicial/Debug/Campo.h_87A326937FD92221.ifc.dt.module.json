@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "Debug\\Campo.obj",
+            "outputs": [
+                "Debug\\Campo.h_87A326937FD92221.ifc.dt.module.json",
+                "Debug\\Campo.h_87A326937FD92221.ifc.dt.d.json",
+                "Debug\\Campo.h.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "C:\\Users\\Erick Nava\\Documents\\computacionGrafica\\practicas\\ProyectoFinal\\Configinicial\\Campo.h",
+                    "source-path": "c:\\users\\erick nava\\documents\\computaciongrafica\\practicas\\proyectofinal\\configinicial\\campo.h",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

@@ -1,0 +1,233 @@
+newmtl Material.021
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.021.png
+
+newmtl Material.022
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.022.png
+
+newmtl Material.020
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.020.png
+
+newmtl Material.011
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.011.png
+
+newmtl Material.001
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.001.png
+
+newmtl metalBlack.038
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.038.png
+
+newmtl Material.012
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.012.png
+
+newmtl Material.002
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.002.png
+
+newmtl metalBlack.039
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.039.png
+
+newmtl metalBlack.040
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.040.png
+
+newmtl metalBlack.041
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.041.png
+
+newmtl metalBlack.042
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.042.png
+
+newmtl metalBlack.043
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.043.png
+
+newmtl metalBlack.044
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.044.png
+
+newmtl metalBlack.045
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.045.png
+
+newmtl metalBlack.021
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.021.png
+
+newmtl metalBlack.025
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.025.png
+
+newmtl metalBlack.026
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.026.png
+
+newmtl metalBlack.027
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.027.png
+
+newmtl metalBlack.028
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.028.png
+
+newmtl metalBlack.029
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.029.png
+
+newmtl metalBlack.034
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.034.png
+
+newmtl metalBlack.035
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.035.png
+
+newmtl metalBlack.037
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.037.png
+
+newmtl metalBlack.036
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_metalBlack.036.png
+
+newmtl Material.016
+Ka 0.15 0.15 0.15
+Kd 1.0 1.0 1.0
+Ks 0.15 0.15 0.15
+Ns 32.0
+d 1.0
+illum 2
+map_Kd textures/material_Material.016.png
