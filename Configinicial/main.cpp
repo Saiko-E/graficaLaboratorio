@@ -45,6 +45,7 @@ bool loadBusWheelData(const char* filePath);
 GLuint CreateSolidColorTexture(GLubyte r, GLubyte g, GLubyte b);
 void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent, glm::vec3 position, glm::vec3 size, GLuint texture, float yaw = 0.0f);
 void drawField(GLint modelLoc, GLuint VAO, const glm::mat4& scene, GLuint texGrass, GLuint texWhite);
+void drawBleachers(GLint modelLoc, GLuint VAO, const glm::mat4& scene, GLuint texConcrete, GLuint texSeats);
 void drawGoal(GLint modelLoc, GLuint VAO, const glm::mat4& scene, float x, float direction, GLuint texPosts, GLuint texNet);
 void drawPlayer(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     glm::vec3 position, float yaw, GLuint texJersey,
@@ -488,6 +489,7 @@ int main()
 
         modelTemp = model;
         drawField(modelLoc, VAO, modelTemp, texGrass, texWhite);
+        drawBleachers(modelLoc, VAO, modelTemp, texFloodlight, texBlue);
         drawGoal(modelLoc, VAO, modelTemp, -52.5f, -1.0f, texPosts, texNet);
         drawGoal(modelLoc, VAO, modelTemp, 52.5f, 1.0f, texPosts, texNet);
 
@@ -909,6 +911,32 @@ void drawField(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     }
 }
 
+void drawBleachers(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+    GLuint texConcrete, GLuint texSeats)
+{
+    // Cancha: |z| <= 34; gradas: 36.5..45.5; torres de luz: |z| = 49.
+    constexpr float front = 36.5f, depth = 1.8f, rise = 0.72f;
+    static_assert(front > 34.0f && front + 5 * depth < 49.0f,
+        "Las gradas deben quedar entre la cancha y las torres de luz");
+    for (int side = -1; side <= 1; side += 2) {
+        for (int section = -1; section <= 1; section += 2) {
+            // Dos secciones con acceso central libre de cuatro metros.
+            float x = section * 21.0f;
+            for (int row = 0; row < 5; ++row) {
+                float z = side * (front + (row + 0.5f) * depth);
+                float height = (row + 1) * rise;
+                drawCube(modelLoc, VAO, scene, glm::vec3(x, height * 0.5f, z),
+                    glm::vec3(38.0f, height, depth), texConcrete);
+                drawCube(modelLoc, VAO, scene, glm::vec3(x, height + 0.06f, z),
+                    glm::vec3(37.6f, 0.12f, 1.45f), texSeats);
+            }
+        }
+        // Muro posterior bajo: perfil de un estadio pequeño, sin cubierta.
+        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, 2.0f, side * 46.0f),
+            glm::vec3(84.0f, 4.0f, 0.5f), texConcrete);
+    }
+}
+
 void drawGoal(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     float x, float direction, GLuint texPosts, GLuint texNet)
 {
@@ -1104,7 +1132,7 @@ void drawTrees(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     for (int side = -1; side <= 1; side += 2) {
         for (int i = -3; i <= 3; ++i) {
             float x = static_cast<float>(i) * 15.5f;
-            float z = side * (41.0f + ((i + 3) % 2) * 2.2f);
+            float z = side * (55.0f + ((i + 3) % 2) * 2.2f);
             float height = 3.5f + static_cast<float>((i + 3) % 3) * 0.45f;
             drawCube(modelLoc, VAO, scene, glm::vec3(x, height * 0.5f, z),
                 glm::vec3(0.5f, height, 0.5f), texBark);
