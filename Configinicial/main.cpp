@@ -51,8 +51,8 @@ void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
 void drawPerimeter(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     const glm::mat4& scene, GLuint texWall, GLuint texFacade, GLuint texFloor, GLuint texAccent);
 void drawGoal(GLint modelLoc, GLuint VAO, const glm::mat4& scene, float x, float direction, GLuint texPosts, GLuint texNet);
-void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, const glm::mat4& scene,
-    glm::vec3 position, float yaw, GLuint texJersey,
+void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, const glm::mat4& scene,
+    glm::vec3 position, float yaw, GLuint texJersey, GLuint texHead,
     GLuint texShorts, GLuint texSkin, GLuint texShoes,
     float kickAngle = 0.0f, float diveAngle = 0.0f);
 
@@ -76,7 +76,8 @@ void drawBird(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     GLuint texBird, GLuint texBeak, float elapsed);
 void drawFireworks(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     float elapsed, GLuint texGold, GLuint texBlue, GLuint texRed, GLuint texWhite);
-void drawFloodlightTowers(GLint modelLoc, GLuint VAO, const glm::mat4& scene, GLuint texMetal);
+void drawFloodlightTowers(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
+    const glm::mat4& scene, GLuint texMetal);
 void drawFloodlightPanels(GLint modelLoc, GLuint VAO);
 void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* cameraBase, Model* cameraHead);
 void drawBleachers(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
@@ -387,6 +388,36 @@ int main()
     glEnableVertexAttribArray(2);
     glBindVertexArray(0);
 
+    // Each cube face maps to its own cell in the player's cross-shaped head atlas.
+    GLfloat headVertices[36 * 8];
+    for (int i = 0; i < 36; ++i) {
+        for (int j = 0; j < 6; ++j)
+            headVertices[i * 8 + j] = vertices[i * 6 + j];
+        float x = vertices[i * 6], y = vertices[i * 6 + 1], z = vertices[i * 6 + 2];
+        float nx = vertices[i * 6 + 3], ny = vertices[i * 6 + 4], nz = vertices[i * 6 + 5];
+        float column = nz > 0.5f ? 1.0f : nz < -0.5f ? 3.0f :
+            nx > 0.5f ? 2.0f : nx < -0.5f ? 0.0f : 1.0f;
+        float row = ny > 0.5f ? 0.0f : ny < -0.5f ? 2.0f : 1.0f;
+        float u = nz > 0.5f ? x + 0.5f : nz < -0.5f ? 0.5f - x :
+            nx > 0.5f ? 0.5f - z : nx < -0.5f ? z + 0.5f : x + 0.5f;
+        float v = ny > 0.5f ? z + 0.5f : ny < -0.5f ? 0.5f - z : 0.5f - y;
+        headVertices[i * 8 + 6] = (column + 0.02f + 0.96f * u) / 4.0f;
+        headVertices[i * 8 + 7] = (row + 0.02f + 0.96f * v) / 3.0f;
+    }
+    GLuint headVAO, headVBO;
+    glGenVertexArrays(1, &headVAO);
+    glGenBuffers(1, &headVBO);
+    glBindVertexArray(headVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, headVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(headVertices), headVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
+
 
     // Single pixel solid color textures 
     GLuint texGrass = LoadDiffuseTexture("Models/Textures/Grass005_Color.jpg");
@@ -399,6 +430,12 @@ int main()
     GLuint texRed = CreateSolidColorTexture(205, 45, 45);
     GLuint texShorts = CreateSolidColorTexture(35, 35, 55);
     GLuint texSkin = CreateSolidColorTexture(205, 150, 105);
+    GLuint texHead = LoadDiffuseTexture("Models/Textures/player_head_textures/atlas_emociones/atlas_neutral.png");
+    if (!texHead) texHead = CreateSolidColorTexture(205, 150, 105);
+    glBindTexture(GL_TEXTURE_2D, texHead);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
     GLuint texShoes = CreateSolidColorTexture(30, 30, 30);
     GLuint texPosts = CreateSolidColorTexture(240, 240, 240);
     GLuint texNet = CreateSolidColorTexture(178, 190, 190);
@@ -413,6 +450,8 @@ int main()
     GLuint texBeak = CreateSolidColorTexture(241, 167, 52);
     GLuint texGold = CreateSolidColorTexture(255, 206, 56);
     GLuint texFloodlight = CreateSolidColorTexture(130, 137, 145);
+    GLuint texTowerMetal = LoadDiffuseTexture("Models/Textures/worn_shutter_diff_1k.jpg");
+    if (!texTowerMetal) texTowerMetal = CreateSolidColorTexture(55, 53, 51);
     GLuint texConcrete = CreateSolidColorTexture(183, 181, 175);
     GLuint texFacade = LoadDiffuseTexture("Models/Textures/concrete_diff_1k.jpg");
     if (!texFacade) texFacade = CreateSolidColorTexture(183, 181, 175);
@@ -568,13 +607,13 @@ int main()
         drawGoal(modelLoc, VAO, modelTemp, -52.5f, -1.0f, texPosts, texNet);
         drawGoal(modelLoc, VAO, modelTemp, 52.5f, 1.0f, texPosts, texNet);
 
-        drawPlayer(modelLoc, VAO, jerseyVAO, modelTemp,
+        drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
             glm::vec3(40.4f, 0.0f, 0.0f), 90.0f,
-            texPumas, texShorts, texSkin, texShoes, kickAngle);
+            texPumas, texHead, texShorts, texSkin, texShoes, kickAngle);
 
-        drawPlayer(modelLoc, VAO, VAO, modelTemp,
+        drawPlayer(modelLoc, VAO, VAO, headVAO, modelTemp,
             glm::vec3(51.2f, 0.0f, keeperPositionZ), -90.0f,
-            texRed, texShorts, texSkin, texShoes, 0.0f, keeperDive);
+            texRed, texHead, texShorts, texSkin, texShoes, 0.0f, keeperDive);
 
         drawBall(modelLoc, modelTemp, whiteMesh, blackMesh,
             texWhite, texBlack, rotBall, ballPosition);
@@ -590,7 +629,7 @@ int main()
                 broadcastCameraPositions[i], trackedBallPosition, currentFrame,
                 texShorts, texBlack, texFloodlight, texBlue);
         }
-        drawFloodlightTowers(modelLoc, VAO, modelTemp, texFloodlight);
+        drawFloodlightTowers(modelLoc, textureModeLoc, VAO, modelTemp, texTowerMetal);
         glUniform1i(textureModeLoc, 0);
         glUniform1i(importedTextureLoc, 1);
         drawBroadcastCameraModels(modelLoc, lightingShader,
@@ -657,10 +696,12 @@ int main()
     glDeleteBuffers(1, &VBO);
     glDeleteVertexArrays(1, &jerseyVAO);
     glDeleteBuffers(1, &jerseyVBO);
+    glDeleteVertexArrays(1, &headVAO);
+    glDeleteBuffers(1, &headVBO);
     GLuint textures[] = { texGrass, texWhite, texBlack, texBlue, texPumas, texRed,
-                         texShorts, texSkin, texShoes, texPosts, texNet,
+                         texShorts, texSkin, texHead, texShoes, texPosts, texNet,
                          texSpecular, texBark, texLeavesDark,
-                         texLeavesLight, texBird, texBeak, texGold, texFloodlight, texConcrete, texWalkway, texAsphalt, texFacade, texRoughConcrete };
+                         texLeavesLight, texBird, texBeak, texGold, texFloodlight, texTowerMetal, texConcrete, texWalkway, texAsphalt, texFacade, texRoughConcrete };
     glDeleteTextures(sizeof(textures) / sizeof(textures[0]), textures);
     busBodyModel.reset();
     for (int i = 0; i < 6; ++i) busWheelModels[i].reset();
@@ -1178,8 +1219,8 @@ void drawGoal(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     }
 }
 
-void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, const glm::mat4& scene,
-    glm::vec3 position, float yaw, GLuint texJersey,
+void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, const glm::mat4& scene,
+    glm::vec3 position, float yaw, GLuint texJersey, GLuint texHead,
     GLuint texShorts, GLuint texSkin, GLuint texShoes,
     float kickAngle, float diveAngle)
 {
@@ -1193,8 +1234,8 @@ void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, const glm::mat4& sc
         glm::vec3(0.45f, 0.64f, 0.25f), texJersey);
     drawCube(modelLoc, VAO, modelTemp, glm::vec3(0, 1.55f, 0),
         glm::vec3(0.12f, 0.13f, 0.12f), texSkin);
-    drawCube(modelLoc, VAO, modelTemp, glm::vec3(0, 1.77f, 0),
-        glm::vec3(0.27f, 0.29f, 0.27f), texSkin);
+    drawCube(modelLoc, headVAO, modelTemp, glm::vec3(0, 1.77f, 0),
+        glm::vec3(0.27f, 0.29f, 0.27f), texHead);
 
     for (int side = -1; side <= 1; side += 2) {
         // Arm: both segments are positioned relative to their joint.
@@ -1535,8 +1576,10 @@ glm::mat4 getBroadcastView()
     return camera.GetViewMatrix();
 }
 
-void drawFloodlightTowers(GLint modelLoc, GLuint VAO, const glm::mat4& scene, GLuint texMetal)
+void drawFloodlightTowers(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
+    const glm::mat4& scene, GLuint texMetal)
 {
+    glUniform1i(textureModeLoc, 5);
     for (int i = 0; i < 4; ++i) {
         const glm::vec3& p = floodlightPositions[i];
         drawCube(modelLoc, VAO, scene, p + glm::vec3(0.0f, 8.25f, 0.0f),
@@ -1549,6 +1592,7 @@ void drawFloodlightTowers(GLint modelLoc, GLuint VAO, const glm::mat4& scene, GL
                 glm::vec3(1.0f, 0.12f, 0.9f), texMetal);
         }
     }
+    glUniform1i(textureModeLoc, 0);
 }
 
 void drawFloodlightPanels(GLint modelLoc, GLuint VAO)
