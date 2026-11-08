@@ -27,6 +27,22 @@ La declaración global `Camera camera(vec3(0,0,3))` se mantiene, pero se reasign
 
 ## Controles
 
+En el ejecutable actual, `1`–`8` son vistas fijas de transmisión, `9` muestra
+la fachada desde fuera y `0` activa la cámara libre (W/A/S/D y ratón). La vista
+inicial es la cámara fija 4: para moverte debes pulsar `0`.
+
+La fachada del estadio pequeño se construye por código con dos gradas laterales
+abiertas y un muro perimetral en los cuatro lados. Los dos accesos a nivel de piso
+se alinean con los pasillos entre gradas. No hay techo.
+
+Texturas de prueba (mapas de color, licencia CC0): [Grass 005 de ambientCG](https://ambientcg.com/view?id=Grass005)
+para la cancha, [Pine Bark de Poly Haven](https://polyhaven.com/a/pine_bark) para los
+troncos y [Leaf Set 024 de ambientCG](https://ambientcg.com/view?id=LeafSet024) para
+las copas. Los dos mapas de hojas en `Models/Textures/` son una composición densa
+del atlas de color y opacidad CC0; el mapa oscuro reduce el brillo al 70 %. Las
+esferas usan una proyección plana para esta prueba; el resto de la escena conserva
+sus colores anteriores.
+
 - `W/A/S/D` y flechas: mover cámara.
 - Ratón: orientar cámara.
 - `T/G`, `Y/H`, `U/J`: mover luz puntual en X/Y/Z.
