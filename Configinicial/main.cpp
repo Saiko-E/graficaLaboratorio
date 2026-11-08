@@ -804,17 +804,19 @@ int main()
         drawGoal(modelLoc, VAO, modelTemp, -52.5f, -1.0f, texPosts, texNet);
         drawGoal(modelLoc, VAO, modelTemp, 52.5f, 1.0f, texPosts, texNet);
 
-        const bool penaltyPlayersVisible = matchScene == SCENE_PENALTIES && penaltyState != READY;
+        const bool penaltyPlayersVisible = matchScene == SCENE_PENALTIES;
         if (penaltyPlayersVisible) {
-            drawPlayer(modelLoc, VAO, jerseyVAO, modelTemp,
+            drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
                 glm::vec3(40.4f, 0.0f, 0.0f), 90.0f,
                 penaltyKickerTeam == 0 ? texPumas : texAtlante,
+                texHead,
                 penaltyKickerTeam == 0 ? texShorts : texRed,
                 texSkin, texShoes, kickAngle, 0.0f, 0.0f, 10, texWhite);
 
-            drawPlayer(modelLoc, VAO, jerseyVAO, modelTemp,
+            drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
                 glm::vec3(51.2f, 0.0f, keeperPositionZ), -90.0f,
                 penaltyKickerTeam == 0 ? texAtlante : texPumas,
+                texHead,
                 penaltyKickerTeam == 0 ? texRed : texShorts,
                 texSkin, texShoes, 0.0f, keeperDive, 0.0f, 1, texWhite);
         }
@@ -835,9 +837,10 @@ int main()
                     float yaw = t < 1.0f ? glm::degrees(std::atan2(movement.x, movement.z)) :
                         (team == 0 ? -90.0f : 90.0f);
                     float step = t < 1.0f ? 23.0f * sinf(walkTime * 9.0f) : 0.0f;
-                    drawPlayer(modelLoc, VAO, jerseyVAO, modelTemp,
+                    drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
                         playerPosition, yaw,
                         team == 0 ? texAtlante : texPumas,
+                        texHead,
                         team == 0 ? texRed : texShorts, texSkin, texShoes,
                         0.0f, 0.0f, step, player + 1, texWhite);
                 }
@@ -854,8 +857,9 @@ int main()
                     if (team == champion) {
                         if (player == 5) {
                             place = glm::vec3(0.0f, 0.0f, 38.0f);
-                            drawPlayer(modelLoc, VAO, jerseyVAO, modelTemp, place, 180.0f,
+                            drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp, place, 180.0f,
                                 team == 0 ? texAtlante : texPumas,
+                                texHead,
                                 team == 0 ? texRed : texShorts, texSkin, texShoes,
                                 8.0f, 0.0f, 0.0f, player + 1, texWhite);
                             continue;
@@ -868,9 +872,10 @@ int main()
                     else {
                         place = glm::vec3(-10.0f + player * 2.0f, 0.0f, 48.0f);
                     }
-                    drawPlayer(modelLoc, VAO, jerseyVAO, modelTemp,
+                    drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
                         place, yaw,
                         team == 0 ? texAtlante : texPumas,
+                        texHead,
                         team == 0 ? texRed : texShorts, texSkin, texShoes,
                         0.0f, 0.0f, walk, player + 1, texWhite);
                 }
@@ -962,22 +967,15 @@ int main()
                         }
                     }
 
-                    drawPlayer(modelLoc, VAO, jerseyVAO, modelTemp,
+                    drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
                         place, yaw,
                         team == 0 ? texAtlante : texPumas,
+                        texHead,
                         team == 0 ? texRed : texShorts, texSkin, texShoes,
                         kick, dive, step, player + 1, texWhite);
                 }
             }
         }
-        drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
-            glm::vec3(40.4f, 0.0f, 0.0f), 90.0f,
-            texPumas, texHead, texShorts, texSkin, texShoes, kickAngle);
-
-        drawPlayer(modelLoc, VAO, VAO, headVAO, modelTemp,
-            glm::vec3(51.2f, 0.0f, keeperPositionZ), -90.0f,
-            texRed, texHead, texShorts, texSkin, texShoes, 0.0f, keeperDive);
-
         drawBall(modelLoc, modelTemp, whiteMesh, blackMesh,
             texWhite, texBlack, rotBall, ballPosition);
         drawBleachers(modelLoc, textureModeLoc, VAO, modelTemp, texRoughConcrete, texFacade,
