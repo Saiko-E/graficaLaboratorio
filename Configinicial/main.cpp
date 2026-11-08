@@ -45,11 +45,10 @@ bool loadBusWheelData(const char* filePath);
 //================= draw function =====================================
 GLuint CreateSolidColorTexture(GLubyte r, GLubyte g, GLubyte b);
 GLuint LoadDiffuseTexture(const char* path);
+void VerifyModelTextures(const std::string& modelPath);
 void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent, glm::vec3 position, glm::vec3 size, GLuint texture, float yaw = 0.0f);
 void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene, GLuint texGrass, GLuint texWhite);
-void drawPerimeter(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
-    GLuint texWall, GLuint texFloor, GLuint texAccent);
-void drawBleachers(GLint modelLoc, GLuint VAO, const glm::mat4& scene, GLuint texConcrete, GLuint texSeats);
+void drawPerimeter(GLint modelLoc, GLuint VAO, const glm::mat4& scene, GLuint texWall, GLuint texFloor, GLuint texAccent);
 void drawGoal(GLint modelLoc, GLuint VAO, const glm::mat4& scene, float x, float direction, GLuint texPosts, GLuint texNet);
 void drawPlayer(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     glm::vec3 position, float yaw, GLuint texJersey,
@@ -79,6 +78,15 @@ void drawFireworks(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
 void drawFloodlightTowers(GLint modelLoc, GLuint VAO, const glm::mat4& scene, GLuint texMetal);
 void drawFloodlightPanels(GLint modelLoc, GLuint VAO);
 void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* cameraBase, Model* cameraHead);
+void drawBleachers(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+    GLuint texConcrete, GLuint texRed, GLuint texWhite, GLuint texWalkway, GLuint texMetal);
+void drawDrone(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+    const BallMesh& whiteMesh, const BallMesh& blackMesh,
+    glm::vec3 position, glm::vec3 target, float elapsed,
+    GLuint texBody, GLuint texBlades, GLuint texMetal, GLuint texLens);
+void drawTrophy(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+    const BallMesh& whiteMesh, const BallMesh& blackMesh,
+    float elapsed, GLuint texGold, GLuint texBase, GLuint texWhite);
 glm::mat4 getBroadcastView();
 glm::vec3 getBroadcastPosition();
 void ResetPenalty();
@@ -176,21 +184,21 @@ bool keeperCommitted = false;
 glm::vec3 ballPosition(41.5f, 0.11f, 0.0f);
 std::string penaltyResult = "READY";
 int activeCamera = 4;
-const glm::vec3 broadcastCameraPositions[8] = {
-    glm::vec3(40.0f, 32.0f, -13.0f),
-    glm::vec3(40.0f, 32.0f, 13.0f),
-    glm::vec3(34.0f, 6.0f, -25.0f),
-    glm::vec3(35.0f, 5.0f, 0.0f),
-    glm::vec3(34.0f, 6.0f, 25.0f),
-    glm::vec3(49.0f, 7.0f, -39.0f),
-    glm::vec3(49.0f, 7.0f, 39.0f),
-    glm::vec3(0.0f, 21.0f, -44.0f)
+glm::vec3 broadcastCameraPositions[8] = {
+    glm::vec3(20.0f, 22.0f, -14.0f),
+    glm::vec3(20.0f, 22.0f, 14.0f),
+    glm::vec3(30.0f, 0.0f, -40.0f),
+    glm::vec3(59.0f, 0.0f, 0.0f),
+    glm::vec3(30.0f, 0.0f, 40.0f),
+    glm::vec3(49.0f, 0.0f, -40.0f),
+    glm::vec3(24.0f, 4.32f, 62.0f),
+    glm::vec3(-24.0f, 4.32f, -62.0f)
 };
 const glm::vec3 facadeCameraPosition(24.0f, 10.0f, -95.0f);
 glm::vec3 trackedBallPosition(41.5f, 0.11f, 0.0f);
 glm::vec3 cameraHeadPivot(0.0f, 1.5f, 0.0f);
-const float cameraModelScale = 0.65f;
-const float cameraModelForwardYawDegrees = 0.0f;
+const float cameraModelScale = 0.20f;
+float cameraModelForwardYawDegrees = 90.0f;
 const std::string cameraAssetDirectory = "Models/Camaras/";
 const glm::vec3 floodlightPositions[4] = {
     glm::vec3(-40.0f, 0.0f, -49.0f),
@@ -214,6 +222,7 @@ const float busTurnRadius = 9.0f;
 const float busFinalDistance = 10.0f;
 const float busTurnLength = busTurnRadius * busPi * 0.5f;
 const float busRouteLength = busInitialDistance + busTurnLength + busFinalDistance;
+const float busModelScale = 1.85f;
 glm::vec3 busStartPosition(66.0f, 0.0f, -13.0f);
 glm::vec3 busPosition = busStartPosition;
 float busDistanceTraveled = 0.0f;
@@ -292,7 +301,7 @@ int main()
         float lowestWheelPoint = busWheelData[0].position.y - busWheelData[0].radius;
         for (int i = 1; i < 6; ++i)
             lowestWheelPoint = std::min(lowestWheelPoint, busWheelData[i].position.y - busWheelData[i].radius);
-        busStartPosition.y = -lowestWheelPoint;
+        busStartPosition.y = -busModelScale * lowestWheelPoint;
         busPosition = busStartPosition;
     }
     for (const char* path : busFiles) {
@@ -305,6 +314,7 @@ int main()
     std::unique_ptr<Model> busBodyModel;
     std::unique_ptr<Model> busWheelModels[6];
     if (busAssetsReady) {
+        for (const char* path : busFiles) VerifyModelTextures(path);
         busBodyModel.reset(new Model(const_cast<char*>(busFiles[0])));
         for (int i = 0; i < 6; ++i)
             busWheelModels[i].reset(new Model(const_cast<char*>(busFiles[i + 1])));
@@ -318,6 +328,8 @@ int main()
         std::ifstream baseFile(cameraBasePath.c_str());
         std::ifstream headFile(cameraHeadPath.c_str());
         if (baseFile.good() && headFile.good()) {
+            VerifyModelTextures(cameraBasePath);
+            VerifyModelTextures(cameraHeadPath);
             broadcastCameraBase.reset(new Model(const_cast<char*>(cameraBasePath.c_str())));
             broadcastCameraHead.reset(new Model(const_cast<char*>(cameraHeadPath.c_str())));
             std::ifstream pivotFile((cameraAssetDirectory + "camera_pivot.txt").c_str());
@@ -369,6 +381,8 @@ int main()
     GLuint texBeak = CreateSolidColorTexture(241, 167, 52);
     GLuint texGold = CreateSolidColorTexture(255, 206, 56);
     GLuint texFloodlight = CreateSolidColorTexture(130, 137, 145);
+    GLuint texConcrete = CreateSolidColorTexture(183, 181, 175);
+    GLuint texWalkway = CreateSolidColorTexture(112, 108, 103);
 
 
     // spherical ball 
@@ -380,9 +394,16 @@ int main()
     GLint textureModeLoc = glGetUniformLocation(lightingShader.Program, "proceduralTextureMode");
     glUniform1i(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0);
     glUniform1i(glGetUniformLocation(lightingShader.Program, "material.specular"), 1);
+    glUniform1i(glGetUniformLocation(lightingShader.Program, "texture_diffuse1"), 0);
+    glUniform1i(glGetUniformLocation(lightingShader.Program, "texture_specular1"), 1);
+    glUniform1i(glGetUniformLocation(lightingShader.Program, "useImportedModelTexture"), 0);
+    glUniform1i(glGetUniformLocation(lightingShader.Program, "proceduralTextureMode"), 0);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, texSpecular);
     glActiveTexture(GL_TEXTURE0);
+
+    GLint textureModeLoc = glGetUniformLocation(lightingShader.Program, "proceduralTextureMode");
+    GLint importedTextureLoc = glGetUniformLocation(lightingShader.Program, "useImportedModelTexture");
 
     glm::mat4 projection = glm::perspective(glm::radians(camera.GetZoom()), (GLfloat)SCREEN_WIDTH / (GLfloat)SCREEN_HEIGHT, 0.1f, 300.0f);
 
@@ -423,6 +444,10 @@ int main()
 
         glUniform1i(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0);
         glUniform1i(glGetUniformLocation(lightingShader.Program, "material.specular"), 1);
+        glUniform1i(glGetUniformLocation(lightingShader.Program, "texture_diffuse1"), 0);
+        glUniform1i(glGetUniformLocation(lightingShader.Program, "texture_specular1"), 1);
+        glUniform1i(glGetUniformLocation(lightingShader.Program, "useImportedModelTexture"), 0);
+        glUniform1i(glGetUniformLocation(lightingShader.Program, "proceduralTextureMode"), 0);
 
         GLint viewPosLoc = glGetUniformLocation(lightingShader.Program, "viewPos");
         glm::vec3 viewPosition = getBroadcastPosition();
@@ -498,9 +523,10 @@ int main()
         glUniform1i(glGetUniformLocation(lightingShader.Program, "transparency"), 0);
 
         modelTemp = model;
-        drawPerimeter(modelLoc, VAO, modelTemp, texFloodlight, texShorts, texBlue);
+        glUniform1i(textureModeLoc, 0);
+        glUniform1i(importedTextureLoc, 0);
+        drawPerimeter(modelLoc, VAO, modelTemp, texConcrete, texWalkway, texWhite);
         drawField(modelLoc, textureModeLoc, VAO, modelTemp, texGrass, texWhite);
-        drawBleachers(modelLoc, VAO, modelTemp, texFloodlight, texBlue);
         drawGoal(modelLoc, VAO, modelTemp, -52.5f, -1.0f, texPosts, texNet);
         drawGoal(modelLoc, VAO, modelTemp, 52.5f, 1.0f, texPosts, texNet);
 
@@ -514,11 +540,26 @@ int main()
 
         drawBall(modelLoc, modelTemp, whiteMesh, blackMesh,
             texWhite, texBlack, rotBall, ballPosition);
+        drawBleachers(modelLoc, VAO, modelTemp, texConcrete,
+            texRed, texWhite, texWalkway, texFloodlight);
         drawTrees(modelLoc, textureModeLoc, VAO, modelTemp, whiteMesh, blackMesh,
             texBark, texLeavesDark, texLeavesLight);
+        drawTrophy(modelLoc, VAO, modelTemp, whiteMesh, blackMesh,
+            currentFrame, texGold, texBlack, texWhite);
+        for (int i = 0; i < 2; ++i) {
+            if (activeCamera == i + 1) continue;
+            drawDrone(modelLoc, VAO, modelTemp, whiteMesh, blackMesh,
+                broadcastCameraPositions[i], trackedBallPosition, currentFrame,
+                texShorts, texBlack, texFloodlight, texBlue);
+        }
         drawFloodlightTowers(modelLoc, VAO, modelTemp, texFloodlight);
+        glUniform1i(importedTextureLoc, 1);
         drawBroadcastCameraModels(modelLoc, lightingShader,
             broadcastCameraBase.get(), broadcastCameraHead.get());
+        glUniform1i(importedTextureLoc, 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texSpecular);
+        glActiveTexture(GL_TEXTURE0);
         drawBird(modelLoc, VAO, modelTemp, whiteMesh, blackMesh,
             texBird, texBeak, currentFrame);
         if (fireworksActive) {
@@ -533,22 +574,25 @@ int main()
             glm::mat4 busMatrix(1.0f);
             busMatrix = glm::translate(busMatrix, busPosition);
             busMatrix = glm::rotate(busMatrix, busHeading, glm::vec3(0.0f, 1.0f, 0.0f));
+            busMatrix = glm::scale(busMatrix, glm::vec3(busModelScale));
             const glm::vec3 busPivot(0.36695f, 0.0f, 3.16461f);
             busMatrix = glm::translate(busMatrix, -busPivot);
             glUniform1i(glGetUniformLocation(lightingShader.Program, "transparency"), 0);
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(busMatrix));
+            glUniform1i(importedTextureLoc, 1);
             busBodyModel->Draw(lightingShader);
             for (int i = 0; i < 6; ++i) {
                 const glm::vec3 wheelCenter = busWheelData[i].position;
                 glm::mat4 wheelMatrix = glm::translate(busMatrix, wheelCenter);
                 if (busWheelData[i].isFrontWheel)
                     wheelMatrix = glm::rotate(wheelMatrix, busSteeringAngle, glm::vec3(0.0f, 1.0f, 0.0f));
-                const float rollingAngle = -busDistanceTraveled / busWheelData[i].radius;
+                const float rollingAngle = -busDistanceTraveled / (busModelScale * busWheelData[i].radius);
                 wheelMatrix = glm::rotate(wheelMatrix, rollingAngle, glm::vec3(1.0f, 0.0f, 0.0f));
                 wheelMatrix = glm::translate(wheelMatrix, -wheelCenter);
                 glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(wheelMatrix));
                 busWheelModels[i]->Draw(lightingShader);
             }
+            glUniform1i(importedTextureLoc, 0);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, texSpecular);
             glActiveTexture(GL_TEXTURE0);
@@ -574,8 +618,8 @@ int main()
     GLuint textures[] = { texGrass, texWhite, texBlack, texBlue, texRed,
                          texShorts, texSkin, texShoes, texPosts, texNet,
                          texSpecular, texBark, texLeavesDark,
-                         texLeavesLight, texBird, texBeak, texGold, texFloodlight };
-    glDeleteTextures(18, textures);
+                         texLeavesLight, texBird, texBeak, texGold, texFloodlight, texConcrete, texWalkway };
+    glDeleteTextures(20, textures);
     busBodyModel.reset();
     for (int i = 0; i < 6; ++i) busWheelModels[i].reset();
     broadcastCameraBase.reset();
@@ -591,6 +635,30 @@ int main()
 // Moves/alters the camera positions based on user input
 void DoMovement()
 {
+    if (activeCamera == 1 || activeCamera == 2) {
+        glm::vec3& dronePosition = broadcastCameraPositions[activeCamera - 1];
+        glm::vec3 horizontal = trackedBallPosition - dronePosition;
+        horizontal.y = 0.0f;
+        if (glm::dot(horizontal, horizontal) < 0.001f)
+            horizontal = glm::vec3(1.0f, 0.0f, 0.0f);
+        glm::vec3 forward = glm::normalize(horizontal);
+        glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0f, 1.0f, 0.0f)));
+        float velocity = 11.0f * std::min(deltaTime, 0.1f);
+        if (keys[GLFW_KEY_LEFT_SHIFT] || keys[GLFW_KEY_RIGHT_SHIFT])
+            velocity *= 2.0f;
+        if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP]) dronePosition += forward * velocity;
+        if (keys[GLFW_KEY_S] || keys[GLFW_KEY_DOWN]) dronePosition -= forward * velocity;
+        if (keys[GLFW_KEY_A] || keys[GLFW_KEY_LEFT]) dronePosition -= right * velocity;
+        if (keys[GLFW_KEY_D] || keys[GLFW_KEY_RIGHT]) dronePosition += right * velocity;
+        if (keys[GLFW_KEY_Q]) dronePosition.y -= velocity;
+        if (keys[GLFW_KEY_E]) dronePosition.y += velocity;
+        dronePosition.x = glm::clamp(dronePosition.x, -64.0f, 64.0f);
+        dronePosition.y = glm::clamp(dronePosition.y, 7.0f, 34.0f);
+        dronePosition.z = glm::clamp(dronePosition.z, -47.0f, 47.0f);
+        return;
+    }
+    if (activeCamera != 0)
+        return;
 
     // Camera controls
     if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP])
@@ -622,29 +690,29 @@ void DoMovement()
 
     if (keys[GLFW_KEY_T])
     {
-        pointLightPositions[0].x += 0.01f;
+        pointLightPositions[0].x += 0.05f;
     }
     if (keys[GLFW_KEY_G])
     {
-        pointLightPositions[0].x -= 0.01f;
+        pointLightPositions[0].x -= 0.05f;
     }
 
     if (keys[GLFW_KEY_Y])
     {
-        pointLightPositions[0].y += 0.01f;
+        pointLightPositions[0].y += 0.05f;
     }
 
     if (keys[GLFW_KEY_H])
     {
-        pointLightPositions[0].y -= 0.01f;
+        pointLightPositions[0].y -= 0.05f;
     }
     if (keys[GLFW_KEY_U])
     {
-        pointLightPositions[0].z -= 0.1f;
+        pointLightPositions[0].z -= 0.5f;
     }
     if (keys[GLFW_KEY_J])
     {
-        pointLightPositions[0].z += 0.01f;
+        pointLightPositions[0].z += 0.05f;
     }
 
 }
@@ -670,7 +738,12 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
     }
     if (key == GLFW_KEY_0) {
         activeCamera = 0;
+        firstMouse = true;
     }
+    if (key == GLFW_KEY_LEFT_BRACKET)
+        cameraModelForwardYawDegrees -= 90.0f;
+    if (key == GLFW_KEY_RIGHT_BRACKET)
+        cameraModelForwardYawDegrees += 90.0f;
     if (key == GLFW_KEY_SPACE) {
         active = !active;
         Light1 = active ? glm::vec3(0.2f, 0.8f, 1.0f) : glm::vec3(0.0f);
@@ -811,6 +884,10 @@ void Animation()
 
 void MouseCallback(GLFWwindow* window, double xPos, double yPos)
 {
+    if (activeCamera != 0) {
+        firstMouse = true;
+        return;
+    }
     if (firstMouse)
     {
         lastX = xPos;
@@ -862,6 +939,7 @@ GLuint LoadDiffuseTexture(const char* path)
         return 0;
     }
     GLuint texture;
+    glActiveTexture(GL_TEXTURE0);
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -874,6 +952,43 @@ GLuint LoadDiffuseTexture(const char* path)
     glBindTexture(GL_TEXTURE_2D, 0);
     return texture;
 }
+
+void VerifyModelTextures(const std::string& modelPath)
+{
+    std::ifstream objFile(modelPath.c_str());
+    if (!objFile) {
+        std::cerr << "OBJ missing: " << modelPath << std::endl;
+        return;
+    }
+    const std::string::size_type slash = modelPath.find_last_of("/\\");
+    const std::string folder = slash == std::string::npos ? "" : modelPath.substr(0, slash + 1);
+    std::string line;
+    while (std::getline(objFile, line)) {
+        if (line.compare(0, 7, "mtllib ") != 0) continue;
+        std::string mtlName = line.substr(7);
+        if (!mtlName.empty() && mtlName.back() == '\r') mtlName.pop_back();
+        for (char& c : mtlName) if (c == '\\') c = '/';
+        std::ifstream mtlFile((folder + mtlName).c_str());
+        if (!mtlFile) {
+            std::cerr << "MTL missing: " << folder + mtlName << std::endl;
+            continue;
+        }
+        std::string mtlLine;
+        while (std::getline(mtlFile, mtlLine)) {
+            if (mtlLine.compare(0, 7, "map_Kd ") != 0) continue;
+            std::string image = mtlLine.substr(7);
+            while (!image.empty() && (image.back() == '\r' || image.back() == ' ')) image.pop_back();
+            while (!image.empty() && image.front() == ' ') image.erase(image.begin());
+            for (char& c : image) if (c == '\\') c = '/';
+            if (!image.empty() && image.front() == '"' && image.back() == '"')
+                image = image.substr(1, image.size() - 2);
+            if (image.empty()) continue;
+            std::ifstream imageFile((folder + image).c_str(), std::ios::binary);
+            if (!imageFile) std::cerr << "Texture missing for " << modelPath << ": " << folder + image << std::endl;
+        }
+    }
+}
+
 
 void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent,
     glm::vec3 position, glm::vec3 size, GLuint texture, float yaw)
@@ -997,6 +1112,16 @@ void drawPerimeter(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, -0.20f, 0.0f),
         glm::vec3(2.0f * halfLength, 0.20f, 2.0f * halfWidth), texFloor);
 
+void drawPerimeter(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+    GLuint texWall, GLuint texFloor, GLuint texAccent)
+{
+    // Incluye los árboles (|z| <= 57.2) y el recorrido del autobús (x <= 85).
+    constexpr float halfLength = 103.0f, halfWidth = 80.0f;
+    static_assert(halfLength > 85.0f && halfWidth > 71.2f,
+        "El perimetro debe contener el autobus y los arboles");
+    drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, -0.22f, 0.0f),
+        glm::vec3(2.0f * halfLength, 0.22f, 2.0f * halfWidth), texFloor);
+
     for (int side = -1; side <= 1; side += 2) {
         // Muros de las cabeceras: unen los dos laterales sin cerrar la vista superior.
         drawCube(modelLoc, VAO, scene, glm::vec3(side * halfLength, 2.0f, 0.0f),
@@ -1012,8 +1137,8 @@ void drawPerimeter(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
             drawCube(modelLoc, VAO, scene, glm::vec3(x, 3.65f, side * (halfWidth + 0.30f)),
                 glm::vec3(halfLength - 2.0f, 0.22f, 0.10f), texAccent);
         }
-        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, -0.01f, side * 55.0f),
-            glm::vec3(4.0f, 0.08f, 22.0f), texWall);
+        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, -0.01f, side * 72.0f),
+            glm::vec3(4.0f, 0.08f, 16.0f), texWall);
         for (int jamb = -1; jamb <= 1; jamb += 2)
             drawCube(modelLoc, VAO, scene, glm::vec3(jamb * 2.25f, 1.8f, side * halfWidth),
                 glm::vec3(0.5f, 3.6f, 0.7f), texWall);
@@ -1218,7 +1343,7 @@ void drawTrees(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
         for (int i = -3; i <= 3; ++i) {
             if (i == 0) continue;
             float x = static_cast<float>(i) * 15.5f;
-            float z = side * (55.0f + ((i + 3) % 2) * 2.2f);
+            float z = side * (69.0f + ((i + 3) % 2) * 2.2f);
             float height = 3.5f + static_cast<float>((i + 3) % 3) * 0.45f;
             glUniform1i(textureModeLoc, 2);
             drawCube(modelLoc, VAO, scene, glm::vec3(x, height * 0.5f, z),
@@ -1381,20 +1506,31 @@ bool loadBusWheelData(const char* filePath)
 
 glm::vec3 getBroadcastPosition()
 {
-    if (activeCamera == 9) return facadeCameraPosition;
-    return activeCamera >= 1 && activeCamera <= 8
-        ? broadcastCameraPositions[activeCamera - 1] : camera.GetPosition();
+    if (activeCamera >= 1 && activeCamera <= 2) {
+        const glm::vec3& dronePosition = broadcastCameraPositions[activeCamera - 1];
+        glm::vec3 forward = trackedBallPosition - dronePosition;
+        forward.y = 0.0f;
+        if (glm::length(forward) < 0.0001f)
+            forward = glm::vec3(1.0f, 0.0f, 0.0f);
+        forward = glm::normalize(forward);
+        return dronePosition + forward * 2.0f + glm::vec3(0.0f, -0.72f, 0.0f);
+    }
+    if (activeCamera >= 3 && activeCamera <= 8) {
+        const glm::vec3& cameraPosition = broadcastCameraPositions[activeCamera - 1];
+        glm::vec3 pivot = cameraPosition + cameraModelScale * cameraHeadPivot;
+        glm::vec3 forward = trackedBallPosition - pivot;
+        if (glm::length(forward) < 0.0001f)
+            forward = glm::vec3(1.0f, 0.0f, 0.0f);
+        return pivot + glm::normalize(forward) * 1.5f;
+    }
+    return camera.GetPosition();
 }
 
 glm::mat4 getBroadcastView()
 {
-    if (activeCamera == 9)
-        return glm::lookAt(facadeCameraPosition, glm::vec3(0.0f, 2.0f, -43.0f),
+    if (activeCamera >= 1 && activeCamera <= 8)
+        return glm::lookAt(getBroadcastPosition(), trackedBallPosition,
             glm::vec3(0.0f, 1.0f, 0.0f));
-    if (activeCamera >= 1 && activeCamera <= 8) {
-        glm::vec3 eye = broadcastCameraPositions[activeCamera - 1];
-        return glm::lookAt(eye, trackedBallPosition, glm::vec3(0.0f, 1.0f, 0.0f));
-    }
     return camera.GetViewMatrix();
 }
 
@@ -1437,7 +1573,8 @@ void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* ca
 {
     if (!cameraBase || !cameraHead) return;
     glUniform1i(glGetUniformLocation(lightingShader.Program, "transparency"), 0);
-    for (int i = 0; i < 8; ++i) {
+    for (int i = 2; i < 8; ++i) {
+        if (activeCamera == i + 1) continue;
         const glm::vec3& position = broadcastCameraPositions[i];
         glm::mat4 baseMatrix = glm::translate(glm::mat4(1.0f), position);
         baseMatrix = glm::scale(baseMatrix, glm::vec3(cameraModelScale));
@@ -1457,5 +1594,122 @@ void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* ca
         headMatrix = glm::rotate(headMatrix, pitch, glm::vec3(1.0f, 0.0f, 0.0f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(headMatrix));
         cameraHead->Draw(lightingShader);
+    }
+}
+
+
+void drawBleachers(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+    GLuint texConcrete, GLuint texRed, GLuint texWhite, GLuint texWalkway, GLuint texMetal)
+{
+    for (int side = -1; side <= 1; side += 2) {
+        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, -0.025f, side * 42.0f),
+            glm::vec3(106.0f, 0.045f, 15.5f), texWalkway);
+        for (int p = -9; p <= 9; ++p) {
+            float x = p * 5.0f;
+            drawCube(modelLoc, VAO, scene, glm::vec3(x, 0.53f, side * 49.45f),
+                glm::vec3(0.10f, 1.06f, 0.10f), texMetal);
+        }
+        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, 1.05f, side * 49.45f),
+            glm::vec3(90.0f, 0.08f, 0.08f), texMetal);
+        for (int row = 0; row < 8; ++row) {
+            float z = side * (52.0f + 2.0f * row);
+            float height = 0.72f * (row + 1);
+            drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, height * 0.5f, z),
+                glm::vec3(90.0f, height, 2.0f), texConcrete);
+            for (int section = 0; section < 11; ++section) {
+                if (section == 5) continue;
+                float x = (section - 5) * 7.55f;
+                GLuint seatColor = ((section + row) % 2 == 0) ? texRed : texWhite;
+                drawCube(modelLoc, VAO, scene,
+                    glm::vec3(x, height + 0.12f, z - side * 0.15f),
+                    glm::vec3(7.15f, 0.23f, 1.15f), seatColor);
+                drawCube(modelLoc, VAO, scene,
+                    glm::vec3(x, height + 0.40f, z + side * 0.48f),
+                    glm::vec3(7.15f, 0.60f, 0.19f), seatColor);
+            }
+            drawCube(modelLoc, VAO, scene,
+                glm::vec3(0.0f, height + 0.025f, z),
+                glm::vec3(5.9f, 0.05f, 1.85f), texWalkway);
+        }
+        for (int i = -1; i <= 1; i += 2) {
+            drawCube(modelLoc, VAO, scene,
+                glm::vec3(i * 45.3f, 3.3f, side * 59.0f),
+                glm::vec3(0.20f, 6.6f, 16.0f), texMetal);
+        }
+    }
+}
+
+void drawDrone(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+    const BallMesh& whiteMesh, const BallMesh& blackMesh,
+    glm::vec3 position, glm::vec3 target, float elapsed,
+    GLuint texBody, GLuint texBlades, GLuint texMetal, GLuint texLens)
+{
+    glm::vec3 horizontal = target - position;
+    horizontal.y = 0.0f;
+    float yaw = std::atan2(-horizontal.z, horizontal.x);
+    glm::mat4 drone = glm::translate(scene, position);
+    drone = glm::rotate(drone, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
+    drone = glm::rotate(drone, glm::radians(1.8f * sinf(elapsed * 2.0f)),
+        glm::vec3(0.0f, 0.0f, 1.0f));
+    drawCube(modelLoc, VAO, drone, glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(1.45f, 0.32f, 0.95f), texBody);
+    drawCube(modelLoc, VAO, drone, glm::vec3(0.1f, 0.22f, 0.0f),
+        glm::vec3(0.65f, 0.13f, 0.63f), texMetal);
+    for (int sx = -1; sx <= 1; sx += 2) {
+        for (int sz = -1; sz <= 1; sz += 2) {
+            glm::vec3 rotorCenter(sx * 1.0f, 0.10f, sz * 1.0f);
+            float armYaw = std::atan2(-static_cast<float>(sz), static_cast<float>(sx));
+            glm::mat4 arm = glm::rotate(drone, armYaw, glm::vec3(0.0f, 1.0f, 0.0f));
+            drawCube(modelLoc, VAO, arm, glm::vec3(0.69f, 0.04f, 0.0f),
+                glm::vec3(1.46f, 0.11f, 0.13f), texMetal);
+            drawSolidSphere(modelLoc, drone, rotorCenter,
+                glm::vec3(0.25f, 0.13f, 0.25f), whiteMesh, blackMesh, texBody);
+            glm::mat4 rotor = glm::translate(drone, rotorCenter + glm::vec3(0.0f, 0.16f, 0.0f));
+            rotor = glm::rotate(rotor, (sx * sz) * elapsed * 31.0f,
+                glm::vec3(0.0f, 1.0f, 0.0f));
+            drawCube(modelLoc, VAO, rotor, glm::vec3(0.0f),
+                glm::vec3(1.08f, 0.035f, 0.11f), texBlades);
+            drawCube(modelLoc, VAO, rotor, glm::vec3(0.0f),
+                glm::vec3(0.11f, 0.035f, 1.08f), texBlades);
+            drawCube(modelLoc, VAO, drone, glm::vec3(sx * 0.45f, -0.32f, sz * 0.32f),
+                glm::vec3(0.10f, 0.55f, 0.10f), texMetal);
+        }
+    }
+    drawCube(modelLoc, VAO, drone, glm::vec3(0.41f, -0.30f, 0.0f),
+        glm::vec3(0.50f, 0.34f, 0.40f), texBody);
+    drawSolidSphere(modelLoc, drone, glm::vec3(0.68f, -0.30f, 0.0f),
+        glm::vec3(0.14f, 0.14f, 0.14f), whiteMesh, blackMesh, texLens);
+}
+
+void drawTrophy(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+    const BallMesh& whiteMesh, const BallMesh& blackMesh,
+    float elapsed, GLuint texGold, GLuint texBase, GLuint texWhite)
+{
+    glm::mat4 pedestal = glm::translate(scene, glm::vec3(0.0f, 0.0f, 44.0f));
+    drawCube(modelLoc, VAO, pedestal, glm::vec3(0.0f, 0.25f, 0.0f),
+        glm::vec3(3.6f, 0.5f, 3.1f), texBase);
+    drawCube(modelLoc, VAO, pedestal, glm::vec3(0.0f, 0.55f, 0.0f),
+        glm::vec3(2.0f, 0.1f, 1.8f), texWhite);
+    glm::mat4 trophy = glm::translate(pedestal, glm::vec3(0.0f, 0.65f, 0.0f));
+    trophy = glm::rotate(trophy, glm::radians(elapsed * 26.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f));
+    trophy = glm::scale(trophy, glm::vec3(0.72f));
+    drawCube(modelLoc, VAO, trophy, glm::vec3(0.0f, 0.12f, 0.0f),
+        glm::vec3(0.95f, 0.24f, 0.95f), texGold);
+    drawCube(modelLoc, VAO, trophy, glm::vec3(0.0f, 0.44f, 0.0f),
+        glm::vec3(0.22f, 0.55f, 0.22f), texGold);
+    drawCube(modelLoc, VAO, trophy, glm::vec3(0.0f, 0.76f, 0.0f),
+        glm::vec3(0.70f, 0.13f, 0.70f), texGold);
+    drawSolidSphere(modelLoc, trophy, glm::vec3(0.0f, 1.23f, 0.0f),
+        glm::vec3(0.63f, 0.56f, 0.55f), whiteMesh, blackMesh, texGold);
+    drawCube(modelLoc, VAO, trophy, glm::vec3(0.0f, 1.69f, 0.0f),
+        glm::vec3(1.23f, 0.12f, 1.04f), texGold);
+    for (int side = -1; side <= 1; side += 2) {
+        drawCube(modelLoc, VAO, trophy, glm::vec3(side * 0.80f, 1.36f, 0.0f),
+            glm::vec3(0.11f, 0.57f, 0.11f), texGold);
+        drawCube(modelLoc, VAO, trophy, glm::vec3(side * 0.61f, 1.61f, 0.0f),
+            glm::vec3(0.44f, 0.11f, 0.12f), texGold);
+        drawCube(modelLoc, VAO, trophy, glm::vec3(side * 0.61f, 1.10f, 0.0f),
+            glm::vec3(0.43f, 0.10f, 0.12f), texGold);
     }
 }
