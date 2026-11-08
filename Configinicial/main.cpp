@@ -197,7 +197,7 @@ glm::vec3 broadcastCameraPositions[8] = {
 glm::vec3 trackedBallPosition(41.5f, 0.11f, 0.0f);
 glm::vec3 cameraHeadPivot(0.0f, 1.5f, 0.0f);
 const float cameraModelScale = 0.20f;
-float cameraModelForwardYawDegrees = 90.0f;
+float cameraModelForwardYawDegrees = -90.0f;
 const std::string cameraAssetDirectory = "Models/Camaras/";
 const glm::vec3 floodlightPositions[4] = {
     glm::vec3(-40.0f, 0.0f, -49.0f),
@@ -551,6 +551,7 @@ int main()
                 texShorts, texBlack, texFloodlight, texBlue);
         }
         drawFloodlightTowers(modelLoc, VAO, modelTemp, texFloodlight);
+        glUniform1i(textureModeLoc, 0);
         glUniform1i(importedTextureLoc, 1);
         drawBroadcastCameraModels(modelLoc, lightingShader,
             broadcastCameraBase.get(), broadcastCameraHead.get());
@@ -569,6 +570,7 @@ int main()
                 fireworksActive = false;
         }
         if (busAssetsReady) {
+            glUniform1i(textureModeLoc, 0);
             glm::mat4 busMatrix(1.0f);
             busMatrix = glm::translate(busMatrix, busPosition);
             busMatrix = glm::rotate(busMatrix, busHeading, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -961,8 +963,12 @@ void VerifyModelTextures(const std::string& modelPath)
     const std::string::size_type slash = modelPath.find_last_of("/\\");
     const std::string folder = slash == std::string::npos ? "" : modelPath.substr(0, slash + 1);
     std::string line;
+    bool foundUV = false;
+    bool foundMaterials = false;
     while (std::getline(objFile, line)) {
+        if (line.compare(0, 3, "vt ") == 0) foundUV = true;
         if (line.compare(0, 7, "mtllib ") != 0) continue;
+        foundMaterials = true;
         std::string mtlName = line.substr(7);
         if (!mtlName.empty() && mtlName.back() == '\r') mtlName.pop_back();
         for (char& c : mtlName) if (c == '\\') c = '/';
@@ -985,6 +991,8 @@ void VerifyModelTextures(const std::string& modelPath)
             if (!imageFile) std::cerr << "Texture missing for " << modelPath << ": " << folder + image << std::endl;
         }
     }
+    if (!foundMaterials) std::cerr << "OBJ without MTL reference: " << modelPath << std::endl;
+    if (!foundUV) std::cerr << "OBJ without UV coordinates (vt): " << modelPath << std::endl;
 }
 
 
@@ -1520,6 +1528,8 @@ void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* ca
 {
     if (!cameraBase || !cameraHead) return;
     glUniform1i(glGetUniformLocation(lightingShader.Program, "transparency"), 0);
+    glUniform1i(glGetUniformLocation(lightingShader.Program, "proceduralTextureMode"), 0);
+    glUniform1i(glGetUniformLocation(lightingShader.Program, "useImportedModelTexture"), 1);
     for (int i = 2; i < 8; ++i) {
         if (activeCamera == i + 1) continue;
         const glm::vec3& position = broadcastCameraPositions[i];
@@ -1531,14 +1541,17 @@ void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* ca
         glm::vec3 pivotWorld = position + cameraModelScale * cameraHeadPivot;
         glm::vec3 direction = trackedBallPosition - pivotWorld;
         float horizontalDistance = glm::length(glm::vec2(direction.x, direction.z));
-        float yaw = std::atan2(-direction.x, -direction.z) +
-            glm::radians(cameraModelForwardYawDegrees);
+        if (glm::length(direction) < 0.0001f)
+            direction = glm::vec3(0.0f, 0.0f, -1.0f);
+        float yaw = std::atan2(-direction.x, -direction.z);
         float pitch = std::atan2(direction.y, std::max(0.0001f, horizontalDistance));
         pitch = glm::clamp(pitch, glm::radians(-80.0f), glm::radians(80.0f));
 
         glm::mat4 headMatrix = glm::translate(baseMatrix, cameraHeadPivot);
         headMatrix = glm::rotate(headMatrix, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
         headMatrix = glm::rotate(headMatrix, pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+        headMatrix = glm::rotate(headMatrix, glm::radians(cameraModelForwardYawDegrees),
+            glm::vec3(0.0f, 1.0f, 0.0f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(headMatrix));
         cameraHead->Draw(lightingShader);
     }

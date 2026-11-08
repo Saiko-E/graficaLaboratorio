@@ -1,21 +1,16 @@
-
-# Visual Studio 2026
+# Visual Studio
 .vs/
+*.vsidx
 *.ipch
-*.sdf
-*.opensdf
-*.VC.db
-*.VC.opendb
+*.ilk
+*.pdb
+*.pch
 
 # Archivos compilados
+*.exe
+*.dll
 *.obj
 *.o
-*.exe
-*.pdb
-*.ilk
-*.idb
-*.tlog
-*.lastbuildstate
 
 # Carpetas de compilacion
 x64/
@@ -23,12 +18,7 @@ x86/
 Debug/
 Release/
 build/
-[Bb]in/
-[Oo]bj/
 
-# Archivos temporales
-*.tmp
-*.log
-*.user
-*.suo
-*.cache
+# Permitir modelos 3D de OpenGL
+!Configinicial/Models/
+!Configinicial/Models/**/*.obj
