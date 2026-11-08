@@ -24,6 +24,11 @@ void main()
                          position.y * 2.5) + vec2(0.5, 1.25);
     else if (proceduralTextureMode == 3)
         TexCoords = position.xy * 0.5 + vec2(0.5);
+    else if (proceduralTextureMode == 4)
+        TexCoords = (position.xz + vec2(0.5)) * vec2(20.0, 16.0);
+    else if (proceduralTextureMode == 5)
+        TexCoords = (abs(normal.y) > 0.5 ? FragPos.xz :
+                     vec2(abs(normal.x) > 0.5 ? FragPos.z : FragPos.x, FragPos.y)) / 4.0;
     else
         TexCoords = texCoords;
 }
