@@ -87,21 +87,11 @@ void main( )
         vec3 viewDir = normalize(viewPos - FragPos);
         vec3 halfDir = normalize(lightDir + viewDir);
 
-        float tealMask = smoothstep(0.06, 0.18, albedo.g - albedo.r)
-                       * smoothstep(0.06, 0.16, albedo.b - albedo.r)
-                       * (1.0 - smoothstep(0.14, 0.32, abs(albedo.g - albedo.b)))
-                       * (1.0 - smoothstep(0.15, 0.38, albedo.r));
-
-        float metalLevel = clamp((albedo.g + albedo.b) * 0.65, 0.0, 1.0);
-        vec3 metalColor = mix(vec3(0.18, 0.20, 0.23),
-                              vec3(0.62, 0.65, 0.69), metalLevel);
-        vec3 baseColor = mix(albedo.rgb, metalColor, tealMask);
-
         float diffuse = max(dot(n, lightDir), 0.0);
         float highlight = pow(max(dot(n, halfDir), 0.0), 64.0);
-        float gloss = mix(0.06, 0.11, tealMask);
-        vec3 finalColor = baseColor * (0.76 + 0.28 * diffuse)
-                        + vec3(0.94, 0.96, 1.0) * highlight * gloss;
+        // Keep the imported camera colors intact, including the Liga MX logo.
+        vec3 finalColor = albedo.rgb * (0.76 + 0.28 * diffuse)
+                        + vec3(0.94, 0.96, 1.0) * highlight * 0.06;
 
         color = vec4(clamp(finalColor, 0.0, 1.0), albedo.a);
         return;
