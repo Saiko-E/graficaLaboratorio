@@ -22,3 +22,7 @@ build/
 # Permitir modelos 3D de OpenGL
 !Configinicial/Models/
 !Configinicial/Models/**/*.obj
+
+# Archivos de chui inutiles
+build.sh
+graficaLaboratorio
