@@ -45,19 +45,11 @@ bool loadBusWheelData(const char* filePath);
 //================= draw function =====================================
 GLuint CreateSolidColorTexture(GLubyte r, GLubyte g, GLubyte b);
 GLuint LoadDiffuseTexture(const char* path);
-<<<<<<< HEAD
 void VerifyModelTextures(const std::string& modelPath);
 void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent, glm::vec3 position, glm::vec3 size, GLuint texture, float yaw = 0.0f);
 void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene, GLuint texGrass, GLuint texWhite);
 void drawPerimeter(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     const glm::mat4& scene, GLuint texWall, GLuint texFacade, GLuint texFloor, GLuint texAccent);
-=======
-void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent, glm::vec3 position, glm::vec3 size, GLuint texture, float yaw = 0.0f);
-void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene, GLuint texGrass, GLuint texWhite);
-void drawPerimeter(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
-    GLuint texWall, GLuint texFloor, GLuint texAccent);
-void drawBleachers(GLint modelLoc, GLuint VAO, const glm::mat4& scene, GLuint texConcrete, GLuint texSeats);
->>>>>>> d0376f0e440255b51eecd57289e017c30335c43c
 void drawGoal(GLint modelLoc, GLuint VAO, const glm::mat4& scene, float x, float direction, GLuint texPosts, GLuint texNet);
 void drawPlayer(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     glm::vec3 position, float yaw, GLuint texJersey,
@@ -405,7 +397,6 @@ int main()
 
     // Set texture units
     lightingShader.Use();
-    GLint textureModeLoc = glGetUniformLocation(lightingShader.Program, "proceduralTextureMode");
     glUniform1i(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0);
     glUniform1i(glGetUniformLocation(lightingShader.Program, "material.specular"), 1);
     glUniform1i(glGetUniformLocation(lightingShader.Program, "texture_diffuse1"), 0);
