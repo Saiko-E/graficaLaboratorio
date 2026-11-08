@@ -287,15 +287,15 @@ int main()
 
     //models
     const char* busFiles[] = {
-        "Models/Autobus/carroceria.obj",
-        "Models/Autobus/llanta_1.obj",
-        "Models/Autobus/llanta_2.obj",
-        "Models/Autobus/llanta_3.obj",
-        "Models/Autobus/llanta_4obj.obj",
-        "Models/Autobus/llanta_5.obj",
-        "Models/Autobus/llanta_6.obj"
+        "Models/autobus/carroceria.obj",
+        "Models/autobus/llanta_1.obj",
+        "Models/autobus/llanta_2.obj",
+        "Models/autobus/llanta_3.obj",
+        "Models/autobus/llanta_4obj.obj",
+        "Models/autobus/llanta_5.obj",
+        "Models/autobus/llanta_6.obj"
     };
-    busAssetsReady = loadBusWheelData("Models/Autobus/ruedas.txt");
+    busAssetsReady = loadBusWheelData("Models/autobus/ruedas.txt");
     if (busAssetsReady) {
         float lowestWheelPoint = busWheelData[0].position.y - busWheelData[0].radius;
         for (int i = 1; i < 6; ++i)
