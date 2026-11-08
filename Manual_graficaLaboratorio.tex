@@ -1,0 +1,155 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry,graphicx,booktabs,array,xcolor,hyperref,parskip,fancyhdr}
+\geometry{margin=2.5cm}
+\setlength{\headheight}{15pt}
+\hypersetup{colorlinks=true,linkcolor=blue!50!black,urlcolor=blue!50!black}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Estadio de fútbol --- Manual}
+\rhead{Computación Gráfica}
+\cfoot{\thepage}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+\centering
+\begin{minipage}{0.4\textwidth}\centering
+\IfFileExists{figuras/unam.png}{\includegraphics[height=2.8cm]{figuras/unam.png}}{\fbox{Logotipo UNAM pendiente}}
+\end{minipage}\hfill
+\begin{minipage}{0.4\textwidth}\centering
+\IfFileExists{figuras/fi.png}{\includegraphics[height=2.8cm]{figuras/fi.png}}{\fbox{Logotipo FI pendiente}}
+\end{minipage}
+\vspace{1.4cm}
+
+{\Large Universidad Nacional Autónoma de México\\ Facultad de Ingeniería\par}
+\vspace{1cm}
+\rule{\textwidth}{0.7pt}\\[0.5cm]
+{\LARGE\bfseries Estadio de fútbol en OpenGL\par}
+\vspace{0.3cm}
+{\Large Manual de usuario y manual técnico --- boceto\par}
+\rule{\textwidth}{0.7pt}
+\vspace{1.3cm}
+
+\begin{tabular}{rl}
+Asignatura: & Computación Gráfica (confirmar nombre oficial)\\
+Equipo: & \textbf{Pendiente: nombres completos en orden alfabético}\\
+Profesor(a): & \textbf{Pendiente: nombre}\\
+Fecha de entrega: & \textbf{Pendiente: confirmar con el profesor}
+\end{tabular}
+\vfill
+{\large Versión preliminar basada en \texttt{graficaLaboratorio/Configinicial/}.\par}
+\end{titlepage}
+
+\hypersetup{pageanchor=true}
+\pagenumbering{roman}
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+
+\part{Manual de usuario}
+\section{Propósito y alcance}
+El programa muestra un estadio pequeño de fútbol sin techo, con cancha, gradas, fachada y cámaras de transmisión. Permite recorrer la escena y activar un penal, fuegos artificiales y, cuando se cargan sus recursos, un autobús. Los resultados del penal se muestran en el título de la ventana y en la consola. La clasificación de objetos y animaciones para la evaluación sigue pendiente de validación.
+
+\section{Preparación y ejecución}
+En Linux se requieren un compilador de C/C++, \texttt{pkg-config} y los paquetes de desarrollo de GLFW, GLEW, GLM y Assimp. Conservar la carpeta \texttt{Configinicial/} junto a \texttt{Shader/}, \texttt{Models/} y \texttt{SOIL2/}; ejecutar desde ella para que funcionen las rutas relativas:
+\begin{verbatim}
+cd graficaLaboratorio/Configinicial
+./build.sh
+./graficaLaboratorio
+\end{verbatim}
+El script usa \texttt{gcc} y \texttt{g++} para crear \texttt{graficaLaboratorio}. La vista inicial es la cámara de transmisión 4; para recorrer libremente el estadio pulsar \texttt{0}.
+
+\section{Controles}
+\begin{center}
+\begin{tabular}{p{0.27\textwidth}p{0.65\textwidth}}
+\toprule
+Tecla & Acción comprobada en \texttt{main.cpp}\\
+\midrule
+\texttt{0} & Cámara libre: mover con W/A/S/D o flechas y orientar con el ratón.\\
+\texttt{1--2} & Vista desde drones; W/A/S/D o flechas desplazan el dron, Q/E cambian altura y Shift acelera.\\
+\texttt{3--8} & Vistas fijas de transmisión.\\
+\texttt{9} & Vista exterior de la fachada.\\
+\texttt{N} & Iniciar un penal si el anterior terminó; el portero reacciona durante el tiro.\\
+\texttt{P} & Lanzar fuegos artificiales.\\
+\texttt{R} & Reiniciar penal, balón y contadores.\\
+\texttt{B} & Iniciar o pausar autobús \emph{solo si sus archivos se cargaron correctamente}.\\
+\texttt{Espacio} & Alternar la animación de color de la luz puntual.\\
+\texttt{[} / \texttt{]} & Cambiar la orientación inicial de los modelos de cámara en pasos de 90 grados.\\
+\texttt{T/G, Y/H, U/J} & Mover la luz puntual en X, Y y Z.\\
+\texttt{Esc} & Cerrar la ventana.\\
+\bottomrule
+\end{tabular}
+\end{center}
+\textbf{Nota:} el movimiento W/A/S/D en vistas 3--9 no cambia la cámara; los ajustes T/G, Y/H, U/J funcionan en modo libre.
+
+\section{Prueba guiada y problemas conocidos}
+Pulsar \texttt{9} para ver la fachada, \texttt{0} para caminar por el estadio, \texttt{N} para el penal y \texttt{P} para los fuegos. Cambiar a las vistas 1 y 2 para desplazar drones; observar también el ave y el trofeo. \textbf{Pendiente:} añadir capturas propias con la vista y la animación identificadas.
+
+Si falla la compilación, revisar dependencias con \texttt{pkg-config} y conservar el directorio de trabajo indicado. Si no aparecen texturas o cámaras, comprobar \texttt{Shader/} y \texttt{Models/Camaras/}; las rutas se interpretan desde \texttt{Configinicial/}. En Linux el autobús no carga en el estado revisado: \texttt{main.cpp} usa \texttt{Models/Autobus/}, pero la carpeta del repositorio es \texttt{Models/autobus/}. Por ello \texttt{B} no tiene efecto hasta corregir la diferencia de mayúsculas.
+
+\part{Manual técnico}
+\section{Objetivos y alcance}
+Recrear por código un estadio abierto y animaciones relacionadas con el fútbol mediante OpenGL, conservando como base la estructura de cámara, shaders e iluminación de las prácticas. La fachada, gradas, cancha, personajes y otros objetos se forman principalmente con funciones de dibujo; los modelos de las cámaras se importan como OBJ. \textbf{Pendiente:} incorporar imágenes de referencia de fachada y espacio y confirmar con el profesor qué objetos cuentan en el mínimo de siete.
+
+\section{Arquitectura y flujo del programa}
+\texttt{main.cpp} inicia GLFW/GLEW, construye VAO/VBO, shaders, texturas y modelos; registra los callbacks de teclado y ratón. Cada cuadro sigue este flujo:
+\begin{center}
+\fbox{Leer entrada} $\longrightarrow$ \fbox{Actualizar penal y autobús} $\longrightarrow$ \fbox{Configurar cámara y luces}\\[0.7em]
+$\downarrow$\\[-0.1em]
+\fbox{Mostrar cuadro} $\longleftarrow$ \fbox{Dibujar objetos y animaciones}
+\end{center}
+\textbf{Pendiente:} sustituir este esquema preliminar por un diagrama de flujo final, con decisiones y estados del penal, revisado por el equipo.
+
+\section{Módulos y recursos}
+\begin{center}
+\begin{tabular}{p{0.34\textwidth}p{0.58\textwidth}}
+\toprule
+Archivo o grupo & Responsabilidad\\
+\midrule
+\texttt{main.cpp} & Inicialización, controles, escena, estados de penal, autobús y renderizado.\\
+\texttt{Camera.h}, \texttt{Shader.h} & Transformaciones de vista y carga/compilación de shaders; documentar procedencia exacta de la base docente.\\
+\texttt{Shader/lighting.vs}, \texttt{lighting.frag} & Posición, normales, coordenadas procedurales, luces y muestreo de texturas.\\
+\texttt{Model.h}, \texttt{Mesh.h} & Carga y dibujado de los modelos OBJ importados con Assimp.\\
+\texttt{Models/Textures/} & Mapas de color de césped, concreto, asfalto, troncos y hojas.\\
+\texttt{Models/Camaras/} & Cámara separada en base/cabezal, materiales e imagen del logo Liga MX.\\
+\bottomrule
+\end{tabular}
+\end{center}
+El programa genera también texturas de un píxel para los elementos de color sólido. En el shader, la ruta de cámara conserva los colores importados; los mapas procedurales de la escena son de color, sin relieve geométrico. \textbf{Pendiente:} inventariar licencias, créditos, referencias visuales y relación exacta de estos archivos con el código del profesor.
+
+\section{Animaciones implementadas y evaluación pendiente}
+\begin{itemize}
+\item Sencillas candidatas: ave en órbita con aleteo (\texttt{drawBird}), rotores de dron (\texttt{drawDrone}) y giro de trofeo (\texttt{drawTrophy}). El cabezal de las cámaras sigue al balón.
+\item Complejas candidatas: penal (\texttt{Animation}, estados, trayectoria con altura variable y reacción del portero) y fuegos artificiales (\texttt{drawFireworks}, estallidos con partículas calculadas por código).
+\item Autobús: \texttt{updateBusAnimation} define trayecto, giro y ruedas, pero la ruta de recursos incorrecta impide usarlo en Linux actualmente.
+\end{itemize}
+\textbf{Pendiente:} capturar cada una en ejecución y confirmar con el profesor que cumplen exactamente tres sencillas y dos complejas; la existencia del código no equivale a la aceptación de la rúbrica.
+
+\section{Metodología, cronograma y validación}
+El trabajo se ha desarrollado por incrementos: geometría por código, animación, selección de mapas de color, corrección de UV del logo y pruebas locales con \texttt{build.sh}. Existe \texttt{tests/check\_camera\_logo.py} para verificar UV y ruta de textura. \textbf{Pendiente:} completar el siguiente Gantt con fechas reales, responsables y evidencias; no se han supuesto fechas.
+\begin{center}
+\begin{tabular}{p{0.39\textwidth}p{0.18\textwidth}p{0.18\textwidth}p{0.15\textwidth}}
+\toprule
+Actividad & Inicio & Fin & Responsable\\
+\midrule
+Escena y fachada & Por llenar & Por llenar & Por llenar\\
+Animaciones y modelos & Por llenar & Por llenar & Por llenar\\
+Pruebas y documentación & Por llenar & Por llenar & Por llenar\\
+Video y entrega & Por llenar & Por llenar & Por llenar\\
+\bottomrule
+\end{tabular}
+\end{center}
+\textbf{Pendiente:} compilar y probar en una copia limpia y en el equipo de entrega, medir los tamaños por objeto, verificar los siete candidatos texturizados y registrar resultados de las cinco animaciones.
+
+\section{Limitaciones y trabajo pendiente}
+Los asientos, jugadores, balón, ave y otros elementos todavía usan texturas de color plano; las cámaras importadas sí usan mapas de imagen. El autobús queda deshabilitado por la diferencia entre \texttt{Autobus} y \texttt{autobus} en Linux. No hay evidencia incorporada aquí de aprobación del profesor, presentación, video ni entrega en Classroom. Véase \texttt{PENDIENTES\_PROYECTO.md} para el estado detallado.
+
+\section{Conclusiones y referencias}
+\textbf{Pendiente:} una conclusión individual por integrante, conclusiones generales basadas en pruebas observadas y nombres completos del equipo. No atribuir resultados no verificados.
+
+Referencias por completar: consigna del proyecto final y prácticas proporcionadas por el profesor; documentación oficial de \href{https://www.glfw.org/documentation.html}{GLFW}, \href{https://learnopengl.com/}{OpenGL} y \href{https://github.com/assimp/assimp}{Assimp}. \textbf{Pendiente:} añadir autor, URL y licencia de cada imagen de referencia y mapa de textura utilizado.
+
+\end{document}
