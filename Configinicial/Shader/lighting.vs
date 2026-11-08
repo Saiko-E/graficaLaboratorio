@@ -14,10 +14,9 @@ uniform int proceduralTextureMode;
 
 void main()
 {
-    gl_Position = projection * view *  model * vec4(position, 1.0f);
+    gl_Position = projection * view * model * vec4(position, 1.0f);
     FragPos = vec3(model * vec4(position, 1.0f));
     Normal = mat3(transpose(inverse(model))) * normal;
-    // La geometría procedural no tiene UV: proyectar césped, troncos y copas.
     if (proceduralTextureMode == 1)
         TexCoords = (position.xz + vec2(0.5)) * vec2(12.0, 8.0);
     else if (proceduralTextureMode == 2)

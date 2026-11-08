@@ -194,7 +194,6 @@ glm::vec3 broadcastCameraPositions[8] = {
     glm::vec3(24.0f, 4.32f, 62.0f),
     glm::vec3(-24.0f, 4.32f, -62.0f)
 };
-const glm::vec3 facadeCameraPosition(24.0f, 10.0f, -95.0f);
 glm::vec3 trackedBallPosition(41.5f, 0.11f, 0.0f);
 glm::vec3 cameraHeadPivot(0.0f, 1.5f, 0.0f);
 const float cameraModelScale = 0.20f;
@@ -391,7 +390,6 @@ int main()
 
     // Set texture units
     lightingShader.Use();
-    GLint textureModeLoc = glGetUniformLocation(lightingShader.Program, "proceduralTextureMode");
     glUniform1i(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0);
     glUniform1i(glGetUniformLocation(lightingShader.Program, "material.specular"), 1);
     glUniform1i(glGetUniformLocation(lightingShader.Program, "texture_diffuse1"), 0);
@@ -690,29 +688,29 @@ void DoMovement()
 
     if (keys[GLFW_KEY_T])
     {
-        pointLightPositions[0].x += 0.05f;
+        pointLightPositions[0].x += 0.01f;
     }
     if (keys[GLFW_KEY_G])
     {
-        pointLightPositions[0].x -= 0.05f;
+        pointLightPositions[0].x -= 0.01f;
     }
 
     if (keys[GLFW_KEY_Y])
     {
-        pointLightPositions[0].y += 0.05f;
+        pointLightPositions[0].y += 0.01f;
     }
 
     if (keys[GLFW_KEY_H])
     {
-        pointLightPositions[0].y -= 0.05f;
+        pointLightPositions[0].y -= 0.01f;
     }
     if (keys[GLFW_KEY_U])
     {
-        pointLightPositions[0].z -= 0.5f;
+        pointLightPositions[0].z -= 0.1f;
     }
     if (keys[GLFW_KEY_J])
     {
-        pointLightPositions[0].z += 0.05f;
+        pointLightPositions[0].z += 0.01f;
     }
 
 }
@@ -733,7 +731,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
     if (action != GLFW_PRESS)
         return;
 
-    if (key >= GLFW_KEY_1 && key <= GLFW_KEY_9) {
+    if (key >= GLFW_KEY_1 && key <= GLFW_KEY_8) {
         activeCamera = key - GLFW_KEY_1 + 1;
     }
     if (key == GLFW_KEY_0) {
@@ -1060,57 +1058,6 @@ void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
             glm::vec3(0.3f, 0.03f, 0.3f), texWhite);
     }
 }
-
-void drawBleachers(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
-    GLuint texConcrete, GLuint texSeats)
-{
-    // Cancha: |z| <= 34; gradas: 36.5..45.5; torres de luz: |z| = 49.
-    constexpr float front = 36.5f, depth = 1.8f, rise = 0.72f;
-    static_assert(front > 34.0f && front + 5 * depth < 49.0f,
-        "Las gradas deben quedar entre la cancha y las torres de luz");
-    for (int side = -1; side <= 1; side += 2) {
-        for (int section = -1; section <= 1; section += 2) {
-            // Dos secciones con acceso central libre de cuatro metros.
-            float x = section * 21.0f;
-            for (int row = 0; row < 5; ++row) {
-                float z = side * (front + (row + 0.5f) * depth);
-                float height = (row + 1) * rise;
-                drawCube(modelLoc, VAO, scene, glm::vec3(x, height * 0.5f, z),
-                    glm::vec3(38.0f, height, depth), texConcrete);
-                drawCube(modelLoc, VAO, scene, glm::vec3(x, height + 0.06f, z),
-                    glm::vec3(37.6f, 0.12f, 1.45f), texSeats);
-            }
-            // Fachada exterior: el muro deja libre el acceso al pasillo central.
-            drawCube(modelLoc, VAO, scene, glm::vec3(x, 2.0f, side * 46.0f),
-                glm::vec3(38.0f, 4.0f, 0.5f), texConcrete);
-            drawCube(modelLoc, VAO, scene, glm::vec3(x, 3.65f, side * 46.30f),
-                glm::vec3(38.0f, 0.22f, 0.10f), texSeats);
-        }
-        for (int column = -4; column <= 4; ++column) {
-            if (column == 0) continue;
-            drawCube(modelLoc, VAO, scene, glm::vec3(column * 10.0f, 2.0f, side * 46.4f),
-                glm::vec3(0.45f, 4.0f, 0.55f), texConcrete);
-        }
-        // Acceso a nivel de piso: marco abierto y camino directo entre las gradas.
-        for (int jamb = -1; jamb <= 1; jamb += 2)
-            drawCube(modelLoc, VAO, scene, glm::vec3(jamb * 2.25f, 1.8f, side * 46.3f),
-                glm::vec3(0.5f, 3.6f, 0.7f), texConcrete);
-        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, 3.95f, side * 46.3f),
-            glm::vec3(5.0f, 0.7f, 0.7f), texConcrete);
-        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, 4.31f, side * 46.65f),
-            glm::vec3(5.0f, 0.15f, 0.10f), texSeats);
-    }
-}
-
-void drawPerimeter(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
-    GLuint texWall, GLuint texFloor, GLuint texAccent)
-{
-    // Incluye los árboles (|z| <= 57.2) y el recorrido del autobús (x <= 85).
-    constexpr float halfLength = 89.0f, halfWidth = 64.0f;
-    static_assert(halfLength > 85.0f && halfWidth > 57.2f,
-        "El perimetro debe contener el autobus y los arboles");
-    drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, -0.20f, 0.0f),
-        glm::vec3(2.0f * halfLength, 0.20f, 2.0f * halfWidth), texFloor);
 
 void drawPerimeter(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     GLuint texWall, GLuint texFloor, GLuint texAccent)
