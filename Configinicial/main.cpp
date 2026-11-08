@@ -30,6 +30,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Model.h"
+#include "SOIL2/SOIL2.h"
 
 
 // Function prototypes
@@ -43,8 +44,11 @@ bool loadBusWheelData(const char* filePath);
 
 //================= draw function =====================================
 GLuint CreateSolidColorTexture(GLubyte r, GLubyte g, GLubyte b);
+GLuint LoadDiffuseTexture(const char* path);
 void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent, glm::vec3 position, glm::vec3 size, GLuint texture, float yaw = 0.0f);
-void drawField(GLint modelLoc, GLuint VAO, const glm::mat4& scene, GLuint texGrass, GLuint texWhite);
+void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene, GLuint texGrass, GLuint texWhite);
+void drawPerimeter(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+    GLuint texWall, GLuint texFloor, GLuint texAccent);
 void drawBleachers(GLint modelLoc, GLuint VAO, const glm::mat4& scene, GLuint texConcrete, GLuint texSeats);
 void drawGoal(GLint modelLoc, GLuint VAO, const glm::mat4& scene, float x, float direction, GLuint texPosts, GLuint texNet);
 void drawPlayer(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
@@ -64,7 +68,7 @@ void drawBall(GLint modelLoc, const glm::mat4& scene,
 void deleteBallMesh(BallMesh& mesh);
 void drawSolidSphere(GLint modelLoc, const glm::mat4& parent, glm::vec3 position,
     glm::vec3 size, const BallMesh& whiteMesh, const BallMesh& blackMesh, GLuint texture);
-void drawTrees(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+void drawTrees(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texBark, GLuint texLeavesDark, GLuint texLeavesLight);
 void drawBird(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
@@ -182,6 +186,7 @@ const glm::vec3 broadcastCameraPositions[8] = {
     glm::vec3(49.0f, 7.0f, 39.0f),
     glm::vec3(0.0f, 21.0f, -44.0f)
 };
+const glm::vec3 facadeCameraPosition(24.0f, 10.0f, -95.0f);
 glm::vec3 trackedBallPosition(41.5f, 0.11f, 0.0f);
 glm::vec3 cameraHeadPivot(0.0f, 1.5f, 0.0f);
 const float cameraModelScale = 0.65f;
@@ -342,7 +347,8 @@ int main()
 
 
     // Single pixel solid color textures 
-    GLuint texGrass = CreateSolidColorTexture(35, 145, 55);
+    GLuint texGrass = LoadDiffuseTexture("Models/Textures/Grass005_Color.jpg");
+    if (!texGrass) texGrass = CreateSolidColorTexture(35, 145, 55);
     GLuint texWhite = CreateSolidColorTexture(245, 245, 245);
     GLuint texBlack = CreateSolidColorTexture(20, 20, 20);
     GLuint texBlue = CreateSolidColorTexture(25, 70, 210);
@@ -353,9 +359,12 @@ int main()
     GLuint texPosts = CreateSolidColorTexture(240, 240, 240);
     GLuint texNet = CreateSolidColorTexture(178, 190, 190);
     GLuint texSpecular = CreateSolidColorTexture(35, 35, 35);
-    GLuint texBark = CreateSolidColorTexture(110, 73, 43);
-    GLuint texLeavesDark = CreateSolidColorTexture(35, 102, 47);
-    GLuint texLeavesLight = CreateSolidColorTexture(62, 141, 67);
+    GLuint texBark = LoadDiffuseTexture("Models/Textures/pine_bark_diff_1k.jpg");
+    if (!texBark) texBark = CreateSolidColorTexture(110, 73, 43);
+    GLuint texLeavesDark = LoadDiffuseTexture("Models/Textures/LeafSet024_Dark.jpg");
+    if (!texLeavesDark) texLeavesDark = CreateSolidColorTexture(35, 102, 47);
+    GLuint texLeavesLight = LoadDiffuseTexture("Models/Textures/LeafSet024_Light.jpg");
+    if (!texLeavesLight) texLeavesLight = CreateSolidColorTexture(62, 141, 67);
     GLuint texBird = CreateSolidColorTexture(83, 89, 96);
     GLuint texBeak = CreateSolidColorTexture(241, 167, 52);
     GLuint texGold = CreateSolidColorTexture(255, 206, 56);
@@ -368,6 +377,7 @@ int main()
 
     // Set texture units
     lightingShader.Use();
+    GLint textureModeLoc = glGetUniformLocation(lightingShader.Program, "proceduralTextureMode");
     glUniform1i(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0);
     glUniform1i(glGetUniformLocation(lightingShader.Program, "material.specular"), 1);
     glActiveTexture(GL_TEXTURE1);
@@ -488,7 +498,8 @@ int main()
         glUniform1i(glGetUniformLocation(lightingShader.Program, "transparency"), 0);
 
         modelTemp = model;
-        drawField(modelLoc, VAO, modelTemp, texGrass, texWhite);
+        drawPerimeter(modelLoc, VAO, modelTemp, texFloodlight, texShorts, texBlue);
+        drawField(modelLoc, textureModeLoc, VAO, modelTemp, texGrass, texWhite);
         drawBleachers(modelLoc, VAO, modelTemp, texFloodlight, texBlue);
         drawGoal(modelLoc, VAO, modelTemp, -52.5f, -1.0f, texPosts, texNet);
         drawGoal(modelLoc, VAO, modelTemp, 52.5f, 1.0f, texPosts, texNet);
@@ -503,7 +514,7 @@ int main()
 
         drawBall(modelLoc, modelTemp, whiteMesh, blackMesh,
             texWhite, texBlack, rotBall, ballPosition);
-        drawTrees(modelLoc, VAO, modelTemp, whiteMesh, blackMesh,
+        drawTrees(modelLoc, textureModeLoc, VAO, modelTemp, whiteMesh, blackMesh,
             texBark, texLeavesDark, texLeavesLight);
         drawFloodlightTowers(modelLoc, VAO, modelTemp, texFloodlight);
         drawBroadcastCameraModels(modelLoc, lightingShader,
@@ -654,7 +665,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
     if (action != GLFW_PRESS)
         return;
 
-    if (key >= GLFW_KEY_1 && key <= GLFW_KEY_8) {
+    if (key >= GLFW_KEY_1 && key <= GLFW_KEY_9) {
         activeCamera = key - GLFW_KEY_1 + 1;
     }
     if (key == GLFW_KEY_0) {
@@ -842,6 +853,28 @@ GLuint CreateSolidColorTexture(GLubyte r, GLubyte g, GLubyte b)
     return texture;
 }
 
+GLuint LoadDiffuseTexture(const char* path)
+{
+    int width, height;
+    unsigned char* image = SOIL_load_image(path, &width, &height, 0, SOIL_LOAD_RGB);
+    if (!image) {
+        std::cerr << "Texture not loaded: " << path << " (" << SOIL_last_result() << ")" << std::endl;
+        return 0;
+    }
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    SOIL_free_image_data(image);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return texture;
+}
+
 void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent,
     glm::vec3 position, glm::vec3 size, GLuint texture, float yaw)
 {
@@ -856,12 +889,14 @@ void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent,
     glBindVertexArray(0);
 }
 
-void drawField(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     GLuint texGrass, GLuint texWhite)
 {
     // Ground: the upper surface is at y=0.
+    glUniform1i(textureModeLoc, 1);
     drawCube(modelLoc, VAO, scene, glm::vec3(0, -0.04f, 0),
         glm::vec3(105, 0.08f, 68), texGrass);
+    glUniform1i(textureModeLoc, 0);
 
     // Touchlines, goal lines, and halfway line.
     for (int side = -1; side <= 1; side += 2) {
@@ -930,10 +965,60 @@ void drawBleachers(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
                 drawCube(modelLoc, VAO, scene, glm::vec3(x, height + 0.06f, z),
                     glm::vec3(37.6f, 0.12f, 1.45f), texSeats);
             }
+            // Fachada exterior: el muro deja libre el acceso al pasillo central.
+            drawCube(modelLoc, VAO, scene, glm::vec3(x, 2.0f, side * 46.0f),
+                glm::vec3(38.0f, 4.0f, 0.5f), texConcrete);
+            drawCube(modelLoc, VAO, scene, glm::vec3(x, 3.65f, side * 46.30f),
+                glm::vec3(38.0f, 0.22f, 0.10f), texSeats);
         }
-        // Muro posterior bajo: perfil de un estadio pequeño, sin cubierta.
-        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, 2.0f, side * 46.0f),
-            glm::vec3(84.0f, 4.0f, 0.5f), texConcrete);
+        for (int column = -4; column <= 4; ++column) {
+            if (column == 0) continue;
+            drawCube(modelLoc, VAO, scene, glm::vec3(column * 10.0f, 2.0f, side * 46.4f),
+                glm::vec3(0.45f, 4.0f, 0.55f), texConcrete);
+        }
+        // Acceso a nivel de piso: marco abierto y camino directo entre las gradas.
+        for (int jamb = -1; jamb <= 1; jamb += 2)
+            drawCube(modelLoc, VAO, scene, glm::vec3(jamb * 2.25f, 1.8f, side * 46.3f),
+                glm::vec3(0.5f, 3.6f, 0.7f), texConcrete);
+        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, 3.95f, side * 46.3f),
+            glm::vec3(5.0f, 0.7f, 0.7f), texConcrete);
+        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, 4.31f, side * 46.65f),
+            glm::vec3(5.0f, 0.15f, 0.10f), texSeats);
+    }
+}
+
+void drawPerimeter(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+    GLuint texWall, GLuint texFloor, GLuint texAccent)
+{
+    // Incluye los árboles (|z| <= 57.2) y el recorrido del autobús (x <= 85).
+    constexpr float halfLength = 89.0f, halfWidth = 64.0f;
+    static_assert(halfLength > 85.0f && halfWidth > 57.2f,
+        "El perimetro debe contener el autobus y los arboles");
+    drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, -0.20f, 0.0f),
+        glm::vec3(2.0f * halfLength, 0.20f, 2.0f * halfWidth), texFloor);
+
+    for (int side = -1; side <= 1; side += 2) {
+        // Muros de las cabeceras: unen los dos laterales sin cerrar la vista superior.
+        drawCube(modelLoc, VAO, scene, glm::vec3(side * halfLength, 2.0f, 0.0f),
+            glm::vec3(0.5f, 4.0f, 2.0f * halfWidth), texWall);
+        drawCube(modelLoc, VAO, scene, glm::vec3(side * (halfLength + 0.30f), 3.65f, 0.0f),
+            glm::vec3(0.10f, 0.22f, 2.0f * halfWidth), texAccent);
+
+        // Laterales con dos vanos alineados con los pasillos entre gradas.
+        for (int section = -1; section <= 1; section += 2) {
+            float x = section * (halfLength + 2.0f) * 0.5f;
+            drawCube(modelLoc, VAO, scene, glm::vec3(x, 2.0f, side * halfWidth),
+                glm::vec3(halfLength - 2.0f, 4.0f, 0.5f), texWall);
+            drawCube(modelLoc, VAO, scene, glm::vec3(x, 3.65f, side * (halfWidth + 0.30f)),
+                glm::vec3(halfLength - 2.0f, 0.22f, 0.10f), texAccent);
+        }
+        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, -0.01f, side * 55.0f),
+            glm::vec3(4.0f, 0.08f, 22.0f), texWall);
+        for (int jamb = -1; jamb <= 1; jamb += 2)
+            drawCube(modelLoc, VAO, scene, glm::vec3(jamb * 2.25f, 1.8f, side * halfWidth),
+                glm::vec3(0.5f, 3.6f, 0.7f), texWall);
+        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, 3.95f, side * halfWidth),
+            glm::vec3(5.0f, 0.7f, 0.7f), texWall);
     }
 }
 
@@ -1125,21 +1210,26 @@ void drawSolidSphere(GLint modelLoc, const glm::mat4& parent, glm::vec3 position
     glBindVertexArray(0);
 }
 
-void drawTrees(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+void drawTrees(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texBark, GLuint texLeavesDark, GLuint texLeavesLight)
 {
     for (int side = -1; side <= 1; side += 2) {
         for (int i = -3; i <= 3; ++i) {
+            if (i == 0) continue;
             float x = static_cast<float>(i) * 15.5f;
             float z = side * (55.0f + ((i + 3) % 2) * 2.2f);
             float height = 3.5f + static_cast<float>((i + 3) % 3) * 0.45f;
+            glUniform1i(textureModeLoc, 2);
             drawCube(modelLoc, VAO, scene, glm::vec3(x, height * 0.5f, z),
                 glm::vec3(0.5f, height, 0.5f), texBark);
+            glUniform1i(textureModeLoc, 0);
+            glUniform1i(textureModeLoc, 3);
             drawSolidSphere(modelLoc, scene, glm::vec3(x, height + 0.35f, z),
                 glm::vec3(2.0f, 1.65f, 1.8f), whiteMesh, blackMesh, texLeavesDark);
             drawSolidSphere(modelLoc, scene, glm::vec3(x + 0.5f, height + 1.2f, z - 0.45f),
                 glm::vec3(1.35f, 1.2f, 1.25f), whiteMesh, blackMesh, texLeavesLight);
+            glUniform1i(textureModeLoc, 0);
         }
     }
 }
@@ -1291,12 +1381,16 @@ bool loadBusWheelData(const char* filePath)
 
 glm::vec3 getBroadcastPosition()
 {
+    if (activeCamera == 9) return facadeCameraPosition;
     return activeCamera >= 1 && activeCamera <= 8
         ? broadcastCameraPositions[activeCamera - 1] : camera.GetPosition();
 }
 
 glm::mat4 getBroadcastView()
 {
+    if (activeCamera == 9)
+        return glm::lookAt(facadeCameraPosition, glm::vec3(0.0f, 2.0f, -43.0f),
+            glm::vec3(0.0f, 1.0f, 0.0f));
     if (activeCamera >= 1 && activeCamera <= 8) {
         glm::vec3 eye = broadcastCameraPositions[activeCamera - 1];
         return glm::lookAt(eye, trackedBallPosition, glm::vec3(0.0f, 1.0f, 0.0f));
