@@ -51,7 +51,7 @@ void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
 void drawPerimeter(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     const glm::mat4& scene, GLuint texWall, GLuint texFacade, GLuint texFloor, GLuint texAccent);
 void drawGoal(GLint modelLoc, GLuint VAO, const glm::mat4& scene, float x, float direction, GLuint texPosts, GLuint texNet);
-void drawPlayer(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, const glm::mat4& scene,
     glm::vec3 position, float yaw, GLuint texJersey,
     GLuint texShorts, GLuint texSkin, GLuint texShoes,
     float kickAngle = 0.0f, float diveAngle = 0.0f);
@@ -289,15 +289,15 @@ int main()
 
     //models
     const char* busFiles[] = {
-        "Models/Autobus/carroceria.obj",
-        "Models/Autobus/llanta_1.obj",
-        "Models/Autobus/llanta_2.obj",
-        "Models/Autobus/llanta_3.obj",
-        "Models/Autobus/llanta_4obj.obj",
-        "Models/Autobus/llanta_5.obj",
-        "Models/Autobus/llanta_6.obj"
+        "Models/autobus/carroceria.obj",
+        "Models/autobus/llanta_1.obj",
+        "Models/autobus/llanta_2.obj",
+        "Models/autobus/llanta_3.obj",
+        "Models/autobus/llanta_4obj.obj",
+        "Models/autobus/llanta_5.obj",
+        "Models/autobus/llanta_6.obj"
     };
-    busAssetsReady = loadBusWheelData("Models/Autobus/ruedas.txt");
+    busAssetsReady = loadBusWheelData("Models/autobus/ruedas.txt");
     if (busAssetsReady) {
         float lowestWheelPoint = busWheelData[0].position.y - busWheelData[0].radius;
         for (int i = 1; i < 6; ++i)
@@ -362,6 +362,31 @@ int main()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+    // Keep the original cube unchanged; only the jersey torso needs UVs.
+    static_assert(sizeof(vertices) / sizeof(vertices[0]) == 36 * 6, "Expected 36 cube vertices");
+    GLfloat jerseyVertices[36 * 8];
+    for (int i = 0; i < 36; ++i) {
+        for (int j = 0; j < 6; ++j)
+            jerseyVertices[i * 8 + j] = vertices[i * 6 + j];
+        float x = vertices[i * 6], y = vertices[i * 6 + 1], nz = vertices[i * 6 + 5];
+        jerseyVertices[i * 8 + 6] = nz > 0.5f ? 0.02f + (x + 0.5f) * 0.46f :
+            nz < -0.5f ? 0.52f + (0.5f - x) * 0.46f : 0.005f;
+        jerseyVertices[i * 8 + 7] = std::fabs(nz) > 0.5f ? 0.96f - (y + 0.5f) * 0.92f : 0.005f;
+    }
+    GLuint jerseyVAO, jerseyVBO;
+    glGenVertexArrays(1, &jerseyVAO);
+    glGenBuffers(1, &jerseyVBO);
+    glBindVertexArray(jerseyVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, jerseyVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(jerseyVertices), jerseyVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
+
 
     // Single pixel solid color textures 
     GLuint texGrass = LoadDiffuseTexture("Models/Textures/Grass005_Color.jpg");
@@ -369,6 +394,8 @@ int main()
     GLuint texWhite = CreateSolidColorTexture(245, 245, 245);
     GLuint texBlack = CreateSolidColorTexture(20, 20, 20);
     GLuint texBlue = CreateSolidColorTexture(25, 70, 210);
+    GLuint texPumas = LoadDiffuseTexture("Models/Textures/pumas_navy_jersey.png");
+    if (!texPumas) texPumas = CreateSolidColorTexture(14, 30, 61);
     GLuint texRed = CreateSolidColorTexture(205, 45, 45);
     GLuint texShorts = CreateSolidColorTexture(35, 35, 55);
     GLuint texSkin = CreateSolidColorTexture(205, 150, 105);
@@ -541,11 +568,11 @@ int main()
         drawGoal(modelLoc, VAO, modelTemp, -52.5f, -1.0f, texPosts, texNet);
         drawGoal(modelLoc, VAO, modelTemp, 52.5f, 1.0f, texPosts, texNet);
 
-        drawPlayer(modelLoc, VAO, modelTemp,
+        drawPlayer(modelLoc, VAO, jerseyVAO, modelTemp,
             glm::vec3(40.4f, 0.0f, 0.0f), 90.0f,
-            texBlue, texShorts, texSkin, texShoes, kickAngle);
+            texPumas, texShorts, texSkin, texShoes, kickAngle);
 
-        drawPlayer(modelLoc, VAO, modelTemp,
+        drawPlayer(modelLoc, VAO, VAO, modelTemp,
             glm::vec3(51.2f, 0.0f, keeperPositionZ), -90.0f,
             texRed, texShorts, texSkin, texShoes, 0.0f, keeperDive);
 
@@ -628,7 +655,9 @@ int main()
     deleteBallMesh(blackMesh);
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    GLuint textures[] = { texGrass, texWhite, texBlack, texBlue, texRed,
+    glDeleteVertexArrays(1, &jerseyVAO);
+    glDeleteBuffers(1, &jerseyVBO);
+    GLuint textures[] = { texGrass, texWhite, texBlack, texBlue, texPumas, texRed,
                          texShorts, texSkin, texShoes, texPosts, texNet,
                          texSpecular, texBark, texLeavesDark,
                          texLeavesLight, texBird, texBeak, texGold, texFloodlight, texConcrete, texWalkway, texAsphalt, texFacade, texRoughConcrete };
@@ -1149,7 +1178,7 @@ void drawGoal(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     }
 }
 
-void drawPlayer(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, const glm::mat4& scene,
     glm::vec3 position, float yaw, GLuint texJersey,
     GLuint texShorts, GLuint texSkin, GLuint texShoes,
     float kickAngle, float diveAngle)
@@ -1160,7 +1189,7 @@ void drawPlayer(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     model = glm::rotate(model, glm::radians(yaw), glm::vec3(0, 1, 0));
     glm::mat4 modelTemp = model; // Same principle used in the original example.
 
-    drawCube(modelLoc, VAO, modelTemp, glm::vec3(0, 1.20f, 0),
+    drawCube(modelLoc, torsoVAO, modelTemp, glm::vec3(0, 1.20f, 0),
         glm::vec3(0.45f, 0.64f, 0.25f), texJersey);
     drawCube(modelLoc, VAO, modelTemp, glm::vec3(0, 1.55f, 0),
         glm::vec3(0.12f, 0.13f, 0.12f), texSkin);

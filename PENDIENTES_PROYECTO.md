@@ -15,6 +15,7 @@
 - [x] Estadio pequeño abierto: cancha, gradas laterales, fachada perimetral de cuatro lados y accesos. La escena combina objetos hechos por código y modelos importados para la cámara (y autobús condicionado a sus recursos).
 - [x] Mapas de color diferenciados: césped `Grass005`, asfalto `clean_asphalt`, fachada y paredes laterales `concrete`, escalones `rough_concrete`, troncos `pine_bark` y hojas `LeafSet024`. Asientos y pasillos conservan colores planos. La geometría por código recibe coordenadas procedurales desde `Shader/lighting.vs`.
 - [x] Logo de Liga MX en la cámara: `Models/Camaras/cameraHead.obj` usa `textures/liga_mx_logo.png`; se corrigieron sus UV para evitar la repetición. `tests/check_camera_logo.py` verifica la ruta y el rango de UV. La cámara se comprobó visualmente de cerca.
+- [x] El tirador usa una playera azul marino/dorada de diseño propio: el torso tiene un VAO con UV para frente y espalda, y el PNG se puede regenerar con `Models/Textures/generate_pumas_jersey.py`. El portero no cambió.
 - [x] `Configinicial/build.sh` compila localmente `graficaLaboratorio` sin depender de `Debug/`. El proyecto está en GitHub.
 
 ## Pendientes antes de entregar
@@ -22,7 +23,7 @@
 ### Escena y objetos
 
 - [ ] Guardar **imágenes de referencia de la fachada y del espacio** y relacionarlas con el estadio entregado (**falta:** incluir referencias de la escena y sus créditos; las fotos usadas como texturas no sustituyen referencias de fachada/espacio).
-- [ ] Acreditar **7 o más tipos de objetos distintos con texturizado adecuado** (**falta:** inventario evaluable y acabar el texturizado de candidatos todavía planos: porterías, jugadores, balón, ave, drones, trofeo y torres usan `CreateSolidColorTexture()` de 1 píxel en `main.cpp:369–389`; cancha, árboles, gradas/fachada y cámaras sí tienen imágenes. No contar objetos repetidos ni detalles como accesos; confirmar con el profesor cuáles admite).
+- [ ] Acreditar **7 o más tipos de objetos distintos con texturizado adecuado** (**falta:** inventario evaluable y acabar el texturizado de candidatos todavía planos: porterías, portero, balón, ave, drones, trofeo y torres usan colores de `CreateSolidColorTexture()`; la playera del tirador, cancha, árboles, gradas/fachada y cámaras sí usan imágenes. No contar objetos repetidos ni detalles como accesos; confirmar con el profesor cuáles admite).
 - [ ] Hacer visible y animable el autobús en Linux (**falta:** corregir `Models/Autobus/` en `main.cpp:291–300`, pues los OBJ y `ruedas.txt` están en `Models/autobus/`; `busAssetsReady` queda desactivado y los dibujos/tecla `B` se omiten).
 - [ ] Validar recursos y límites de entrega (**falta:** comprobar el peso por objeto, las rutas de texturas de los OBJ/MTL y ejecutar desde una copia limpia en el equipo final; aquí solo se verificó el código y la existencia local de archivos).
 - [ ] Explicar el uso del **código base del profesor** (**falta:** identificar en el manual la procedencia de `Camera.h`, `Shader.h`, shaders, iluminación y máquina de estados, y solicitar confirmación de que la adaptación cumple la consigna).
