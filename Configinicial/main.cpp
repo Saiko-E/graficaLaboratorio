@@ -210,7 +210,7 @@ glm::vec3 broadcastCameraPositions[8] = {
     glm::vec3(-24.0f, 4.32f, -62.0f)
 };
 const glm::vec3 facadeCameraPosition(24.0f, 10.0f, -95.0f);
-glm::vec3 trackedBallPosition(41.5f, 0.11f, 0.0f);
+glm::vec3 trackedBallPosition(0.0f, 0.11f, 0.0f);
 glm::vec3 cameraHeadPivot(0.0f, 8.837823f, 0.0f);
 const float cameraModelScale = 0.20f;
 float cameraModelForwardYawDegrees = 0.0f;
@@ -252,6 +252,8 @@ float teamLineupTime[2] = { 0.0f, 0.0f };
 const float playerExitDelay = 0.62f;
 const float playerWalkDuration = 3.7f;
 const int playersPerTeam = 11;
+const float pumasCornerKickTime = 0.55f;
+const float pumasShotTime = 4.3f;
 
 const glm::vec3 busPivot(0.36695f, 0.0f, 3.16461f);
 glm::mat4 getBusModelMatrix(const TeamBus& bus)
@@ -669,8 +671,11 @@ int main()
                 updateBusAnimation();
             updateFade(deltaTime);
         }
+        const bool ballVisible = matchScene == SCENE_KICKOFF || matchScene == SCENE_PUMAS_GOAL ||
+            matchScene == SCENE_ATLANTE_GOAL || matchScene == SCENE_PENALTIES;
         float trackingAmount = 1.0f - std::exp(-4.0f * std::max(0.0f, sequencePaused ? 0.0f : deltaTime));
-        glm::vec3 trackedTarget = (matchScene == SCENE_FINAL) ? trophyFocusPosition : ballPosition;
+        glm::vec3 trackedTarget = matchScene == SCENE_FINAL ? trophyFocusPosition :
+            ballVisible ? ballPosition : glm::vec3(0.0f, 0.11f, 0.0f);
         trackedBallPosition = glm::mix(trackedBallPosition, trackedTarget, trackingAmount);
         std::string title = "PUMAS " + std::to_string(pumasScore) + " - " +
             std::to_string(atlanteScore) + " ATLANTE | " + getSceneLabel() +
@@ -931,13 +936,14 @@ int main()
                     else if (matchScene == SCENE_PUMAS_GOAL) {
                         if (team == 1) {
                             if (player == 6) {
-                                place = glm::vec3(50.8f, 0.0f, -33.0f);
-                                kick = sceneTime < 1.1f ? 38.0f * sinf(sceneTime * 2.85f) : 0.0f;
-                                yaw = 145.0f;
+                                place = glm::vec3(50.9f, 0.0f, -33.5f);
+                                kick = sceneTime < 2.0f * pumasCornerKickTime ?
+                                    30.0f * sinf(sceneTime / (2.0f * pumasCornerKickTime) * busPi) : 0.0f;
+                                yaw = -16.0f;
                                 step = 0.0f;
                             }
                             if (player == 8) {
-                                float t = glm::clamp(sceneTime / 2.6f, 0.0f, 1.0f);
+                                float t = glm::clamp(sceneTime / 2.5f, 0.0f, 1.0f);
                                 place = glm::mix(glm::vec3(32.0f, 0.0f, -10.0f), glm::vec3(43.0f, 0.0f, -5.0f), t);
                                 step = t < 1.0f ? 24.0f * sinf(sceneTime * 8.5f) : 0.0f;
                                 if (sceneTime > 2.2f && sceneTime < 2.9f) kick = -15.0f;
@@ -947,8 +953,9 @@ int main()
                                 float t = glm::clamp((sceneTime - 2.5f) / 1.5f, 0.0f, 1.0f);
                                 place = glm::mix(glm::vec3(39.0f, 0.0f, 6.0f), glm::vec3(46.0f, 0.0f, 0.0f), t);
                                 step = t < 1.0f ? 20.0f * sinf(sceneTime * 9.5f) : 0.0f;
-                                if (sceneTime > 4.0f && sceneTime < 4.9f) kick = 36.0f * sinf((sceneTime - 4.0f) / 0.9f * 3.14159f);
-                                yaw = 110.0f;
+                                if (sceneTime > pumasShotTime - 0.3f && sceneTime < pumasShotTime + 0.3f)
+                                    kick = 36.0f * sinf((sceneTime - (pumasShotTime - 0.3f)) / 0.6f * busPi);
+                                yaw = 90.0f;
                             }
                         }
                         if (team == 0 && player < 4) {
@@ -993,8 +1000,9 @@ int main()
                 }
             }
         }
-        drawBall(modelLoc, modelTemp, whiteMesh, blackMesh,
-            texWhite, texBlack, rotBall, ballPosition);
+        if (ballVisible)
+            drawBall(modelLoc, modelTemp, whiteMesh, blackMesh,
+                texWhite, texBlack, rotBall, ballPosition);
         drawBleachers(modelLoc, textureModeLoc, VAO, modelTemp, texRoughConcrete, texFacade,
             texRed, texWhite, texWalkway, texFloodlight);
         drawTrees(modelLoc, textureModeLoc, VAO, modelTemp, whiteMesh, blackMesh,
@@ -1412,10 +1420,10 @@ void updateMatch(float step)
         float t = sceneTime;
         glm::vec3 start(50.8f, 0.11f, -33.0f);
         glm::vec3 header(43.0f, 2.0f, -5.0f);
-        glm::vec3 scorer(46.0f, 1.0f, 0.0f);
+        glm::vec3 scorer(46.5f, 0.35f, 0.0f);
         glm::vec3 net(53.0f, 1.6f, 0.0f);
         if (t < 2.5f) {
-            float a = glm::clamp(t / 2.5f, 0.0f, 1.0f);
+            float a = glm::clamp((t - pumasCornerKickTime) / (2.5f - pumasCornerKickTime), 0.0f, 1.0f);
             ballPosition = glm::mix(start, header, a) + glm::vec3(0, 3.2f * sinf(busPi * a), 0);
         }
         else if (t < 4.0f) {
@@ -1423,7 +1431,7 @@ void updateMatch(float step)
             ballPosition = glm::mix(header, scorer, a) + glm::vec3(0, 0.5f * sinf(busPi * a), 0);
         }
         else {
-            float a = glm::clamp((t - 4.0f) / 1.2f, 0.0f, 1.0f);
+            float a = glm::clamp((t - pumasShotTime) / (5.2f - pumasShotTime), 0.0f, 1.0f);
             ballPosition = glm::mix(scorer, net, a);
         }
         matchSecond = std::min(59, static_cast<int>(t));
