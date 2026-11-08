@@ -200,14 +200,14 @@ glm::vec3 ballPosition(41.5f, 0.11f, 0.0f);
 std::string penaltyResult = "READY";
 int activeCamera = 9;
 glm::vec3 broadcastCameraPositions[8] = {
-    glm::vec3(20.0f, 22.0f, -14.0f),
-    glm::vec3(20.0f, 22.0f, 14.0f),
-    glm::vec3(30.0f, 0.0f, -40.0f),
-    glm::vec3(59.0f, 0.0f, 0.0f),
-    glm::vec3(30.0f, 0.0f, 40.0f),
-    glm::vec3(49.0f, 0.0f, -40.0f),
-    glm::vec3(24.0f, 4.32f, 62.0f),
-    glm::vec3(-24.0f, 4.32f, -62.0f)
+    glm::vec3(-57.0f, 2.5f, -6.0f), // 1: porteria Pumas (-x)
+    glm::vec3(57.0f, 2.5f, 6.0f),  // 2: porteria Atlante (+x)
+    glm::vec3(-26.0f, 5.5f, -42.0f), // 3: mitad Pumas
+    glm::vec3(26.0f, 5.5f, 42.0f),  // 4: mitad Atlante
+    glm::vec3(0.0f, 7.5f, -69.0f), // 5: gradas izquierda
+    glm::vec3(0.0f, 7.5f, 69.0f),  // 6: gradas derecha
+    glm::vec3(20.0f, 22.0f, -14.0f), // 7: dron uno
+    glm::vec3(-20.0f, 22.0f, 14.0f)  // 8: dron dos
 };
 const glm::vec3 facadeCameraPosition(24.0f, 10.0f, -95.0f);
 glm::vec3 trackedBallPosition(41.5f, 0.11f, 0.0f);
@@ -347,7 +347,6 @@ void startArrival()
         teamLineupTime[team] = 0.0f;
     }
     arrivalStarted = true;
-    activeCamera = 9;
     ResetPenalty();
     goals = 0;
     saves = 0;
@@ -774,7 +773,7 @@ int main()
         glm::mat4 view;
         view = getBroadcastView();
         projection = glm::perspective(glm::radians(activeCamera == 9 ? 62.0f :
-            (activeCamera == 1 || activeCamera == 2 ? 54.0f : camera.GetZoom())),
+            (activeCamera == 7 || activeCamera == 8 ? 54.0f : camera.GetZoom())),
             (GLfloat)SCREEN_WIDTH / (GLfloat)SCREEN_HEIGHT, 0.1f, 300.0f);
 
         // Get the uniform locations
@@ -985,9 +984,9 @@ int main()
         drawTrophy(modelLoc, VAO, modelTemp, whiteMesh, blackMesh,
             animationClock, texGold, texBlack, texWhite);
         for (int i = 0; i < 2; ++i) {
-            if (activeCamera == i + 1) continue;
+            if (activeCamera == i + 7) continue;
             drawDrone(modelLoc, VAO, modelTemp, whiteMesh, blackMesh,
-                broadcastCameraPositions[i], trackedBallPosition, animationClock,
+                broadcastCameraPositions[i + 6], trackedBallPosition, animationClock,
                 texShorts, texBlack, texFloodlight, texBlue);
         }
         drawFloodlightTowers(modelLoc, textureModeLoc, VAO, modelTemp, texTowerMetal);
@@ -1099,7 +1098,7 @@ int main()
 // Moves/alters the camera positions based on user input
 void DoMovement()
 {
-    if (activeCamera == 1 || activeCamera == 2) {
+    if (activeCamera == 7 || activeCamera == 8) {
         glm::vec3& dronePosition = broadcastCameraPositions[activeCamera - 1];
         glm::vec3 horizontal = trackedBallPosition - dronePosition;
         horizontal.y = 0.0f;
@@ -1279,7 +1278,6 @@ void resetMatch()
     }
     ResetPenalty();
     goals = saves = misses = 0;
-    activeCamera = 9;
 }
 
 void beginMatchScene(int next, bool automatic)
@@ -1293,12 +1291,10 @@ void beginMatchScene(int next, bool automatic)
         startArrival();
     }
     if (matchScene == SCENE_KICKOFF) {
-        activeCamera = 9;
         ballPosition = glm::vec3(0.0f, 0.11f, 0.0f);
         matchMinute = matchSecond = 0;
     }
     if (matchScene == SCENE_PUMAS_GOAL) {
-        activeCamera = 9;
         pumasScore = 0;
         atlanteScore = 0;
         matchMinute = 43;
@@ -1306,7 +1302,6 @@ void beginMatchScene(int next, bool automatic)
         ballPosition = glm::vec3(50.8f, 0.11f, -33.0f);
     }
     if (matchScene == SCENE_ATLANTE_GOAL) {
-        activeCamera = 9;
         pumasScore = 1;
         atlanteScore = 0;
         matchMinute = 87;
@@ -1314,7 +1309,6 @@ void beginMatchScene(int next, bool automatic)
         ballPosition = glm::vec3(-28.0f, 0.11f, 0.0f);
     }
     if (matchScene == SCENE_PENALTIES) {
-        activeCamera = 4;
         pumasScore = 1;
         atlanteScore = 1;
         matchMinute = 90;
@@ -1330,7 +1324,6 @@ void beginMatchScene(int next, bool automatic)
         goals = saves = misses = 0;
     }
     if (matchScene == SCENE_FINAL) {
-        activeCamera = 8;
         matchMinute = 90;
         matchSecond = 0;
         fireworksActive = true;
@@ -2193,8 +2186,8 @@ bool loadBusWheelData(const char* filePath)
 glm::vec3 getBroadcastPosition()
 {
     if (activeCamera == 9)
-        return glm::vec3(0.0f, 92.0f, 135.0f);
-    if (activeCamera >= 1 && activeCamera <= 2) {
+        return glm::vec3(0.0f, 125.0f, 0.0f);
+    if (activeCamera >= 7 && activeCamera <= 8) {
         const glm::vec3& dronePosition = broadcastCameraPositions[activeCamera - 1];
         glm::vec3 forward = trackedBallPosition - dronePosition;
         forward.y = 0.0f;
@@ -2203,7 +2196,7 @@ glm::vec3 getBroadcastPosition()
         forward = glm::normalize(forward);
         return dronePosition + forward * 2.0f + glm::vec3(0.0f, -0.72f, 0.0f);
     }
-    if (activeCamera >= 3 && activeCamera <= 8) {
+    if (activeCamera >= 1 && activeCamera <= 6) {
         const glm::vec3& cameraPosition = broadcastCameraPositions[activeCamera - 1];
         glm::vec3 pivot = cameraPosition + cameraModelScale * cameraHeadPivot;
         glm::vec3 forward = trackedBallPosition - pivot;
@@ -2218,7 +2211,7 @@ glm::mat4 getBroadcastView()
 {
     if (activeCamera == 9)
         return glm::lookAt(getBroadcastPosition(), glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(0.0f, 1.0f, 0.0f));
+            glm::vec3(0.0f, 0.0f, -1.0f));
     if (activeCamera >= 1 && activeCamera <= 8)
         return glm::lookAt(getBroadcastPosition(), trackedBallPosition,
             glm::vec3(0.0f, 1.0f, 0.0f));
@@ -2272,7 +2265,7 @@ void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* ca
     glUniform1i(glGetUniformLocation(lightingShader.Program, "useImportedModelTexture"), 1);
     GLint neutralCameraLoc = glGetUniformLocation(lightingShader.Program, "cameraNeutralMaterial");
     glUniform1i(neutralCameraLoc, 1);
-    for (int i = 2; i < 8; ++i) {
+    for (int i = 0; i < 6; ++i) {
         if (activeCamera == i + 1) continue;
         const glm::vec3& position = broadcastCameraPositions[i];
         glm::mat4 baseMatrix = glm::translate(glm::mat4(1.0f), position);
