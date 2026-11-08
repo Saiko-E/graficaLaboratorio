@@ -113,12 +113,14 @@ Archivo o grupo & Responsabilidad\\
 \texttt{Camera.h}, \texttt{Shader.h} & Transformaciones de vista y carga/compilación de shaders; documentar procedencia exacta de la base docente.\\
 \texttt{Shader/lighting.vs}, \texttt{lighting.frag} & Posición, normales, coordenadas procedurales, luces y muestreo de texturas.\\
 \texttt{Model.h}, \texttt{Mesh.h} & Carga y dibujado de los modelos OBJ importados con Assimp.\\
-\texttt{Models/Textures/} & Mapas de color de césped, concreto, asfalto, troncos, hojas y playera del tirador.\\
+\texttt{Models/Textures/} & Mapas de color de césped, concreto, asfalto, troncos, hojas, playera, cabezas y metal de las torres de iluminación.\\
 \texttt{Models/Camaras/} & Cámara separada en base/cabezal, materiales e imagen del logo Liga MX.\\
 \bottomrule
 \end{tabular}
 \end{center}
 El programa genera también texturas de un píxel para los elementos de color sólido. La playera del tirador usa un atlas original azul marino y dorado (frente y espalda), con UV explícitas en un VAO de torso independiente; el cubo compartido permanece intacto. En el shader, la ruta de cámara conserva los colores importados; los mapas procedurales de la escena son de color, sin relieve geométrico. \textbf{Pendiente:} inventariar licencias, créditos, referencias visuales y relación exacta de estos archivos con el código del profesor.
+Las torres de iluminación usan el mapa difuso 1K \emph{Worn Shutter} de Poly Haven (Dimitrios Savva, CC0: \url{https://polyhaven.com/a/worn_shutter}); los paneles luminosos siguen separados.
+Las cabezas del tirador y el portero comparten un atlas pixel art de seis caras con UV explícitas y filtrado por vecino más cercano. El generador \texttt{generate\_player\_head.py} incluye otras expresiones, pero la escena usa únicamente el atlas neutral; no se animan los rostros.
 
 \section{Animaciones implementadas y evaluación pendiente}
 \begin{itemize}
@@ -145,7 +147,7 @@ Video y entrega & Por llenar & Por llenar & Por llenar\\
 \textbf{Pendiente:} compilar y probar en una copia limpia y en el equipo de entrega, medir los tamaños por objeto, verificar los siete candidatos texturizados y registrar resultados de las cinco animaciones.
 
 \section{Limitaciones y trabajo pendiente}
-Los asientos, el portero, el balón, el ave y otros elementos todavía usan texturas de color plano; el tirador y las cámaras sí usan mapas de imagen. El autobús queda deshabilitado por la diferencia entre \texttt{Autobus} y \texttt{autobus} en Linux. No hay evidencia incorporada aquí de aprobación del profesor, presentación, video ni entrega en Classroom. Véase \texttt{PENDIENTES\_PROYECTO.md} para el estado detallado.
+Los asientos, el uniforme del portero, el balón, el ave y otros elementos todavía usan texturas de color plano; las cabezas de ambos jugadores, la playera del tirador y las cámaras sí usan mapas de imagen. El autobús queda deshabilitado por la diferencia entre \texttt{Autobus} y \texttt{autobus} en Linux. No hay evidencia incorporada aquí de aprobación del profesor, presentación, video ni entrega en Classroom. Véase \texttt{PENDIENTES\_PROYECTO.md} para el estado detallado.
 
 \section{Conclusiones y referencias}
 \textbf{Pendiente:} una conclusión individual por integrante, conclusiones generales basadas en pruebas observadas y nombres completos del equipo. No atribuir resultados no verificados.
