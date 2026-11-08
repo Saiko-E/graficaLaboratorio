@@ -419,6 +419,7 @@ int main()
 
     Shader lightingShader("Shader/lighting.vs", "Shader/lighting.frag");
     Shader lampShader("Shader/lamp.vs", "Shader/lamp.frag");
+    Shader skyShader("Shader/sky.vs", "Shader/sky.frag");
 
     const char* wheelFiles[6] = {
         "Models/autobus/llanta_1.obj",
@@ -708,9 +709,9 @@ int main()
 
         // Directional light
         glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.direction"), -0.2f, -1.0f, -0.3f);
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.ambient"), 0.6f, 0.6f, 0.6f);
+        glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.ambient"), 0.23f, 0.25f, 0.32f);
         glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.diffuse"),
-            0.6f * stadiumLightIntensity, 0.6f * stadiumLightIntensity, 0.6f * stadiumLightIntensity);
+            0.18f, 0.21f, 0.30f);
         glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.specular"), 0.3f, 0.3f, 0.3f);
 
 
@@ -776,6 +777,22 @@ int main()
         projection = glm::perspective(glm::radians(activeCamera == 9 ? 62.0f :
             (activeCamera == 1 || activeCamera == 2 ? 54.0f : camera.GetZoom())),
             (GLfloat)SCREEN_WIDTH / (GLfloat)SCREEN_HEIGHT, 0.1f, 300.0f);
+
+        skyShader.Use();
+        glm::mat4 inverseProjection = glm::inverse(projection);
+        glm::mat3 inverseViewRotation = glm::mat3(glm::inverse(view));
+        glUniformMatrix4fv(glGetUniformLocation(skyShader.Program, "inverseProjection"), 1, GL_FALSE,
+            glm::value_ptr(inverseProjection));
+        glUniformMatrix3fv(glGetUniformLocation(skyShader.Program, "inverseViewRotation"), 1, GL_FALSE,
+            glm::value_ptr(inverseViewRotation));
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+        glBindVertexArray(fadeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        lightingShader.Use();
 
         // Get the uniform locations
         GLint modelLoc = glGetUniformLocation(lightingShader.Program, "model");
@@ -1079,6 +1096,7 @@ int main()
     glDeleteVertexArrays(1, &fadeVAO);
     glDeleteBuffers(1, &fadeVBO);
     glDeleteProgram(fadeProgram);
+    glDeleteProgram(skyShader.Program);
     GLuint textures[] = { texGrass, texWhite, texBlack, texBlue, texPumas, texRed, texAtlante,
                          texShorts, texSkin, texShoes, texPosts, texNet,
                          texSpecular, texBark, texLeavesDark,
