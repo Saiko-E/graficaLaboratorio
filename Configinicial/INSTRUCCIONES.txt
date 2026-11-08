@@ -1,0 +1,99 @@
+REPARACION DE CAMARAS Y LOGOTIPOS - ESTADIO DE PENALES
+====================================================
+
+ARCHIVOS DE ENTRADA ANALIZADOS
+- camera.obj y camera.mtl: un solo modelo con 42 objetos de Blender.
+- carroceria(2).obj y carroceria(1).mtl: carroceria y planos de logotipo.
+
+HALLAZGOS VERIFICADOS
+1. camera.obj contiene 42 piezas diferenciadas. Se separaron en
+   15 objetos del tripode/base y 27 objetos del cuerpo/cabeza.
+   La separacion se realizo mediante la altura de cada subobjeto.
+   Si alguna pieza no corresponde a la parte esperada, se puede ajustar
+   desde el .blend original y reexportar.
+2. El OBJ del autobus usa 'usemtl logo_cruzAzul', pero el MTL proporcionado
+   definia 'newmtl textures/cruz-azul-seeklogo.png'. Se corrigio el nombre.
+3. El MTL de la camara contenia una ruta absoluta a un PNG de Liga MX en
+   una carpeta Descargas. Se sustituyo por 'textures/liga_mx_logo.png'.
+4. Los dos OBJ contienen coordenadas UV para sus texturas.
+5. No se recibieron los PNG reales de Liga MX ni de Cruz Azul. No se
+   pueden reconstruir esos logos exactos solo a partir de los OBJ/MTL.
+
+INSTALACION
+1. Haz copia de seguridad de tu proyecto de Visual Studio.
+2. Copia a Models/Camaras/ desde este paquete:
+     cameraBase.obj
+     cameraBase.mtl
+     cameraHead.obj
+     cameraHead.mtl
+     camera_pivot.txt
+     textures/ (todas las imagenes de colores generadas)
+   Los antiguos camera.obj y camera.mtl ya no son necesarios en el proyecto.
+3. Copia a Models/Autobus/ desde este paquete:
+     carroceria.obj
+     carroceria.mtl
+   MANTEN las seis llantas, ruedas.txt y las demas texturas existentes.
+4. COPIA DESDE TUS ARCHIVOS ORIGINALES LAS IMAGENES QUE FALTAN:
+     Models/Camaras/textures/liga_mx_logo.png
+       (la imagen de Liga MX que tenias antes en Descargas)
+     Models/Autobus/textures/cruz-azul-seeklogo.png
+       (logo del autobus)
+     Models/Autobus/textures/autobus.png
+       (textura principal de la carroceria)
+   Respeta mayusculas y nombres. No renombres otras texturas sin cambiar
+   las referencias del MTL.
+5. Usa Soccer_Estadio_Camara_Autobus_Reparados.cpp como tu UNICO main.cpp.
+6. Copia los archivos de Shader/ a tu carpeta Shader/ solo despues de
+   guardar un respaldo de los tuyos. El fragment shader incluido descarta
+   zonas totalmente transparentes de logos PNG en modelos importados.
+7. En Propiedades del Proyecto > Depuracion > Directorio de trabajo
+   configura $(ProjectDir) si Models/ y Shader/ estan junto al vcxproj.
+
+ESTRUCTURA FINAL (SIN RUTAS ABSOLUTAS)
+Models/
+  Camaras/
+    cameraBase.obj
+    cameraBase.mtl
+    cameraHead.obj
+    cameraHead.mtl
+    camera_pivot.txt
+    textures/
+      liga_mx_logo.png                 <- debes aportar el PNG original
+      color_Material_*.png             <- incluidos
+      color_metalBlack_*.png           <- incluidos
+  Autobus/
+    carroceria.obj
+    carroceria.mtl
+    ruedas.txt
+    llanta_1.obj ... llanta_6.obj
+    textures/
+      autobus.png                      <- debes conservar/copiar
+      cruz-azul-seeklogo.png           <- debes aportar el PNG original
+
+SEGUIMIENTO DE LA CAMARA
+- La base tiene su origen en el piso y permanece fija.
+- La cabeza esta centrada en un pivote mecanico.
+- camera_pivot.txt contiene el desplazamiento desde la base al pivote.
+- drawBroadcastCameraModels() calcula el giro horizontal y vertical hacia
+  trackedBallPosition y aplica estos giros solo a cameraHead.obj.
+- Las teclas 3-8 eligen vistas fijas de transmision; la cabeza fisica
+  continua girando aunque la vista virtual seleccionada sea otra.
+- Las teclas [ y ] ajustan la direccion frontal del OBJ en pasos de 90 grados.
+
+CONTROLES PRINCIPALES
+0: vista libre; 1-2: drones; 3-8: vistas de camaras fisicas.
+N: cobrar penal; R: reiniciar; B: autobús; P: fuegos artificiales.
+[ y ]: corregir orientacion del lente si el OBJ aparece girado.
+
+VERIFICACION
+Ejecuta en PowerShell, desde el directorio del proyecto:
+    python verificar_logos.py --root .
+En la salida revisa 'FALTA PNG/JPG' y 'MATERIAL NO DEFINIDO'.
+
+LIMITACIONES
+- Sin los PNG originales no aparecera el logotipo real, aunque su
+  material y las coordenadas UV esten corregidos.
+- La separacion se hizo a partir del OBJ con criterio geometrico; no se
+  dispuso de Blender para ejecutar y comprobar visualmente el proyecto.
+- La compilacion real depende de Model.h, Mesh.h, SOIL2, GLFW, GLEW,
+  librerias y recursos que estan en tu equipo.

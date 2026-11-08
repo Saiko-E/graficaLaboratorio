@@ -195,9 +195,9 @@ glm::vec3 broadcastCameraPositions[8] = {
     glm::vec3(-24.0f, 4.32f, -62.0f)
 };
 glm::vec3 trackedBallPosition(41.5f, 0.11f, 0.0f);
-glm::vec3 cameraHeadPivot(0.0f, 1.5f, 0.0f);
+glm::vec3 cameraHeadPivot(0.0f, 8.837823f, 0.0f);
 const float cameraModelScale = 0.20f;
-float cameraModelForwardYawDegrees = -90.0f;
+float cameraModelForwardYawDegrees = 0.0f;
 const std::string cameraAssetDirectory = "Models/Camaras/";
 const glm::vec3 floodlightPositions[4] = {
     glm::vec3(-40.0f, 0.0f, -49.0f),
@@ -287,15 +287,15 @@ int main()
 
     //models
     const char* busFiles[] = {
-        "Models/autobus/carroceria.obj",
-        "Models/autobus/llanta_1.obj",
-        "Models/autobus/llanta_2.obj",
-        "Models/autobus/llanta_3.obj",
-        "Models/autobus/llanta_4obj.obj",
-        "Models/autobus/llanta_5.obj",
-        "Models/autobus/llanta_6.obj"
+        "Models/Autobus/carroceria.obj",
+        "Models/Autobus/llanta_1.obj",
+        "Models/Autobus/llanta_2.obj",
+        "Models/Autobus/llanta_3.obj",
+        "Models/Autobus/llanta_4obj.obj",
+        "Models/Autobus/llanta_5.obj",
+        "Models/Autobus/llanta_6.obj"
     };
-    busAssetsReady = loadBusWheelData("Models/autobus/ruedas.txt");
+    busAssetsReady = loadBusWheelData("Models/Autobus/ruedas.txt");
     if (busAssetsReady) {
         float lowestWheelPoint = busWheelData[0].position.y - busWheelData[0].radius;
         for (int i = 1; i < 6; ++i)
@@ -331,11 +331,15 @@ int main()
             VerifyModelTextures(cameraHeadPath);
             broadcastCameraBase.reset(new Model(const_cast<char*>(cameraBasePath.c_str())));
             broadcastCameraHead.reset(new Model(const_cast<char*>(cameraHeadPath.c_str())));
+            std::cout << "Camera meshes loaded separately: fixed base and tracking head." << std::endl;
             std::ifstream pivotFile((cameraAssetDirectory + "camera_pivot.txt").c_str());
             if (pivotFile && !(pivotFile >> cameraHeadPivot.x >> cameraHeadPivot.y >> cameraHeadPivot.z)) {
-                cameraHeadPivot = glm::vec3(0.0f, 1.5f, 0.0f);
+                cameraHeadPivot = glm::vec3(0.0f, 8.837823f, 0.0f);
                 std::cerr << "Invalid camera_pivot.txt; using default pivot." << std::endl;
             }
+            std::cout << "Camera pivot Y: " << cameraHeadPivot.y
+                << ", camera scale: " << cameraModelScale
+                << ", forward correction: " << cameraModelForwardYawDegrees << std::endl;
         }
         else {
             std::cout << "Camera OBJ parts not found; views 1-8 remain available." << std::endl;
@@ -395,6 +399,7 @@ int main()
     glUniform1i(glGetUniformLocation(lightingShader.Program, "texture_diffuse1"), 0);
     glUniform1i(glGetUniformLocation(lightingShader.Program, "texture_specular1"), 1);
     glUniform1i(glGetUniformLocation(lightingShader.Program, "useImportedModelTexture"), 0);
+    glUniform1i(glGetUniformLocation(lightingShader.Program, "cameraNeutralMaterial"), 0);
     glUniform1i(glGetUniformLocation(lightingShader.Program, "proceduralTextureMode"), 0);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, texSpecular);
@@ -445,6 +450,7 @@ int main()
         glUniform1i(glGetUniformLocation(lightingShader.Program, "texture_diffuse1"), 0);
         glUniform1i(glGetUniformLocation(lightingShader.Program, "texture_specular1"), 1);
         glUniform1i(glGetUniformLocation(lightingShader.Program, "useImportedModelTexture"), 0);
+        glUniform1i(glGetUniformLocation(lightingShader.Program, "cameraNeutralMaterial"), 0);
         glUniform1i(glGetUniformLocation(lightingShader.Program, "proceduralTextureMode"), 0);
 
         GLint viewPosLoc = glGetUniformLocation(lightingShader.Program, "viewPos");
@@ -1530,6 +1536,8 @@ void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* ca
     glUniform1i(glGetUniformLocation(lightingShader.Program, "transparency"), 0);
     glUniform1i(glGetUniformLocation(lightingShader.Program, "proceduralTextureMode"), 0);
     glUniform1i(glGetUniformLocation(lightingShader.Program, "useImportedModelTexture"), 1);
+    GLint neutralCameraLoc = glGetUniformLocation(lightingShader.Program, "cameraNeutralMaterial");
+    glUniform1i(neutralCameraLoc, 1);
     for (int i = 2; i < 8; ++i) {
         if (activeCamera == i + 1) continue;
         const glm::vec3& position = broadcastCameraPositions[i];
@@ -1542,19 +1550,18 @@ void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* ca
         glm::vec3 direction = trackedBallPosition - pivotWorld;
         float horizontalDistance = glm::length(glm::vec2(direction.x, direction.z));
         if (glm::length(direction) < 0.0001f)
-            direction = glm::vec3(0.0f, 0.0f, -1.0f);
-        float yaw = std::atan2(-direction.x, -direction.z);
+            direction = glm::vec3(1.0f, 0.0f, 0.0f);
+        float yaw = std::atan2(-direction.z, direction.x) + glm::radians(cameraModelForwardYawDegrees);
         float pitch = std::atan2(direction.y, std::max(0.0001f, horizontalDistance));
-        pitch = glm::clamp(pitch, glm::radians(-80.0f), glm::radians(80.0f));
+        pitch = glm::clamp(pitch, glm::radians(-65.0f), glm::radians(65.0f));
 
         glm::mat4 headMatrix = glm::translate(baseMatrix, cameraHeadPivot);
         headMatrix = glm::rotate(headMatrix, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
-        headMatrix = glm::rotate(headMatrix, pitch, glm::vec3(1.0f, 0.0f, 0.0f));
-        headMatrix = glm::rotate(headMatrix, glm::radians(cameraModelForwardYawDegrees),
-            glm::vec3(0.0f, 1.0f, 0.0f));
+        headMatrix = glm::rotate(headMatrix, pitch, glm::vec3(0.0f, 0.0f, 1.0f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(headMatrix));
         cameraHead->Draw(lightingShader);
     }
+    glUniform1i(neutralCameraLoc, 0);
 }
 
 

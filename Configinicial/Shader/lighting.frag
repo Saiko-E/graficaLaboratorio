@@ -60,6 +60,7 @@ uniform SpotLight spotLight;
 uniform Material material;
 uniform int transparency;
 uniform int useImportedModelTexture;
+uniform int cameraNeutralMaterial;
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_specular1;
 
@@ -77,6 +78,34 @@ vec3 CalcSpotLight( SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir );
 
 void main( )
 {
+    if (cameraNeutralMaterial == 1) {
+        vec4 albedo = FetchDiffuse();
+        if (albedo.a < 0.1) discard;
+
+        vec3 n = normalize(Normal);
+        vec3 lightDir = normalize(vec3(-0.35, 0.85, 0.50));
+        vec3 viewDir = normalize(viewPos - FragPos);
+        vec3 halfDir = normalize(lightDir + viewDir);
+
+        float tealMask = smoothstep(0.06, 0.18, albedo.g - albedo.r)
+                       * smoothstep(0.06, 0.16, albedo.b - albedo.r)
+                       * (1.0 - smoothstep(0.14, 0.32, abs(albedo.g - albedo.b)))
+                       * (1.0 - smoothstep(0.15, 0.38, albedo.r));
+
+        float metalLevel = clamp((albedo.g + albedo.b) * 0.65, 0.0, 1.0);
+        vec3 metalColor = mix(vec3(0.18, 0.20, 0.23),
+                              vec3(0.62, 0.65, 0.69), metalLevel);
+        vec3 baseColor = mix(albedo.rgb, metalColor, tealMask);
+
+        float diffuse = max(dot(n, lightDir), 0.0);
+        float highlight = pow(max(dot(n, halfDir), 0.0), 64.0);
+        float gloss = mix(0.06, 0.11, tealMask);
+        vec3 finalColor = baseColor * (0.76 + 0.28 * diffuse)
+                        + vec3(0.94, 0.96, 1.0) * highlight * gloss;
+
+        color = vec4(clamp(finalColor, 0.0, 1.0), albedo.a);
+        return;
+    }
     // Properties
     vec3 norm = normalize( Normal );
     vec3 viewDir = normalize( viewPos - FragPos );
@@ -94,7 +123,7 @@ void main( )
     result += CalcSpotLight( spotLight, norm, FragPos, viewDir );
  	
     color = vec4(result, FetchDiffuse().a);
-	  if(color.a < 0.1 && transparency==1)
+	  if(color.a < 0.1 && (transparency==1 || useImportedModelTexture==1))
         discard;
 
 }
