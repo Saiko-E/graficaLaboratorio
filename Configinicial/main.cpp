@@ -1338,6 +1338,23 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
         activeCamera = 0;
         firstMouse = true;
     }
+    if (key == GLFW_KEY_O) {
+        activeCamera = 0;
+        firstMouse = true;
+        float orbit = animationClock * 0.24f;
+        float bx = 58.0f * cosf(orbit);
+        float bz = 41.0f * sinf(orbit);
+        float by = 11.5f + 1.8f * sinf(animationClock * 0.46f);
+        glm::vec3 birdPos(bx, by, bz);
+        glm::vec3 forward(-58.0f * sinf(orbit), 0.0f, 41.0f * cosf(orbit));
+        forward = glm::normalize(forward);
+        glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0f, 1.0f, 0.0f)));
+        freeCameraPosition = birdPos + forward * 2.2f + right * 1.4f + glm::vec3(0.0f, 0.2f, 0.0f);
+        glm::vec3 dir = glm::normalize((birdPos + glm::vec3(0.0f, 0.1f, 0.0f)) - freeCameraPosition);
+        GLfloat newYaw = glm::degrees(atan2f(dir.z, dir.x));
+        GLfloat newPitch = glm::degrees(asinf(std::max(-1.0f, std::min(1.0f, dir.y))));
+        camera = Camera(freeCameraPosition, glm::vec3(0.0f, 1.0f, 0.0f), newYaw, newPitch);
+    }
     if (key == GLFW_KEY_LEFT_BRACKET)
         cameraModelForwardYawDegrees -= 90.0f;
     if (key == GLFW_KEY_RIGHT_BRACKET)
@@ -2292,10 +2309,12 @@ void drawBird(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4&
     if (texEye != 0) {
         glUniform1i(textureModeLoc, 8);
         for (int side = -1; side <= 1; side += 2) {
-            drawSolidSphere(modelLoc, bird, glm::vec3(0.53f, 0.17f, side * 0.12f),
-                glm::vec3(0.050f, 0.050f, 0.040f), whiteMesh, blackMesh, texBeak);
-            drawSolidSphere(modelLoc, bird, glm::vec3(0.53f, 0.17f, side * 0.128f),
-                glm::vec3(0.042f, 0.042f, 0.034f), whiteMesh, blackMesh, texEye);
+            // Contorno/cuenca orbital oscura
+            drawSolidSphere(modelLoc, bird, glm::vec3(0.58f, 0.20f, side * 0.170f),
+                glm::vec3(0.095f, 0.095f, 0.075f), whiteMesh, blackMesh, texBird);
+            // Globo ocular grande y sobresaliente con textura de ojo y pupila visible
+            drawSolidSphere(modelLoc, bird, glm::vec3(0.58f, 0.20f, side * 0.185f),
+                glm::vec3(0.082f, 0.082f, 0.068f), whiteMesh, blackMesh, texEye);
         }
     }
 
