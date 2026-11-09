@@ -98,7 +98,7 @@ void drawTrees(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
     GLuint texBark, GLuint texLeavesDark, GLuint texLeavesLight);
 void drawBird(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
-    GLuint texBird, GLuint texBeak, float elapsed);
+    GLuint texBird, GLuint texBeak, float elapsed, GLuint texEye = 0);
 void drawFireworks(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     float elapsed, GLuint texGold, GLuint texBlue, GLuint texRed, GLuint texWhite);
 void drawFloodlightTowers(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
@@ -818,6 +818,8 @@ int main()
     if (!texBird) texBird = CreateSolidColorTexture(83, 89, 96);
     GLuint texBeak = LoadDiffuseTexture("Models/Textures/rough_wood_diff_1k.jpg");
     if (!texBeak) texBeak = CreateSolidColorTexture(241, 167, 52);
+    GLuint texBirdEye = LoadDiffuseTexture("Models/Textures/bird_eye.png");
+    if (!texBirdEye) texBirdEye = CreateSolidColorTexture(235, 175, 25);
     GLuint texDroneBody = LoadDiffuseTexture("Models/Textures/blue_metal_plate_diff_1k.jpg");
     if (!texDroneBody) texDroneBody = CreateSolidColorTexture(35, 35, 55);
     GLuint texDroneArm = LoadDiffuseTexture("Models/Textures/metal_plate_04_diff_1k.jpg");
@@ -1242,7 +1244,7 @@ int main()
         glBindTexture(GL_TEXTURE_2D, texSpecular);
         glActiveTexture(GL_TEXTURE0);
         drawBird(modelLoc, textureModeLoc, VAO, modelTemp, whiteMesh, blackMesh,
-            texBird, texBeak, animationClock);
+            texBird, texBeak, animationClock, texBirdEye);
         if (fireworksActive) {
             float elapsed = animationClock - fireworksStartTime;
             if (elapsed < 4.8f)
@@ -1333,7 +1335,7 @@ int main()
                          texDroneBody, texDroneArm, texDroneRotor, texDroneLens,
                          texShorts, texSkin, texShoes, texPosts, texNet,
                          texSpecular, texBark, texLeavesDark,
-                         texLeavesLight, texBird, texBeak, texGold, texMarble, texDarkWood, texFloodlight, texTowerMetal, texConcrete, texWalkway, texRunningTrack, texWood, texAsphalt, texFacade, texGravelConcrete };
+                         texLeavesLight, texBird, texBeak, texBirdEye, texGold, texMarble, texDarkWood, texFloodlight, texTowerMetal, texConcrete, texWalkway, texRunningTrack, texWood, texAsphalt, texFacade, texGravelConcrete };
     glDeleteTextures(sizeof(textures) / sizeof(textures[0]), textures);
     for (int i = 0; i < 2; ++i) busBodyModels[i].reset();
     for (int i = 0; i < 6; ++i) busWheelModels[i].reset();
@@ -2486,7 +2488,7 @@ void drawTrees(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
 
 void drawBird(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
-    GLuint texBird, GLuint texBeak, float elapsed)
+    GLuint texBird, GLuint texBeak, float elapsed, GLuint texEye)
 {
     float orbit = elapsed * 0.24f;
     float x = 58.0f * cosf(orbit);
@@ -2505,6 +2507,18 @@ void drawBird(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4&
         glm::vec3(0.55f, 0.20f, 0.24f), whiteMesh, blackMesh, texBird);
     drawSolidSphere(modelLoc, bird, glm::vec3(0.48f, 0.12f, 0.0f),
         glm::vec3(0.23f, 0.23f, 0.20f), whiteMesh, blackMesh, texBird);
+
+    if (texEye != 0) {
+        glUniform1i(textureModeLoc, 8);
+        for (int side = -1; side <= 1; side += 2) {
+            // Contorno/cuenca orbital oscura
+            drawSolidSphere(modelLoc, bird, glm::vec3(0.58f, 0.20f, side * 0.170f),
+                glm::vec3(0.095f, 0.095f, 0.075f), whiteMesh, blackMesh, texBird);
+            // Globo ocular grande y sobresaliente con textura de ojo y pupila visible
+            drawSolidSphere(modelLoc, bird, glm::vec3(0.58f, 0.20f, side * 0.185f),
+                glm::vec3(0.082f, 0.082f, 0.068f), whiteMesh, blackMesh, texEye);
+        }
+    }
 
     glUniform1i(textureModeLoc, 7);
     drawCube(modelLoc, VAO, bird, glm::vec3(0.72f, 0.07f, 0.0f),

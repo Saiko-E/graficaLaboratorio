@@ -27,3 +27,9 @@ __pycache__/
 # Archivos de chui inutiles
 build.sh
 graficaLaboratorio
+
+#Archivos de compilacion de latex
+*.aux
+*.log
+*.toc
+*.out
