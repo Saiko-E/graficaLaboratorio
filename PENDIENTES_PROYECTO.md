@@ -18,7 +18,7 @@
 ## No está implementado en `main`
 
 - [ ] El orden y las posiciones de cámara propuestos en `camaras` (`da6ccef`), junto con `tests/check_camera_layout.py`: están en esa rama, **no** en `main`. Las cámaras actuales sí existen, pero usan otra distribución.
-- [ ] Texturizado de imagen para los candidatos que siguen planos: porterías, uniforme del portero, balón, ave, drones y trofeo usan `CreateSolidColorTexture()`. Ya hay varios objetos con mapas de imagen; el código no define una selección cerrada de siete tipos texturizados.
+- [x] Texturizado de imagen completo para todos los objetos del estadio: porterías (`metal_plate_02` y `fabric_leather_01`), uniforme exclusivo del portero (`goalkeeper_green_jersey.png`), balón (`leather_white` y `fabric_leather_01` con proyección esférica polar), trofeo (`trophy_gold`, `marble_01` y `dark_wood`), drones (`blue_metal_plate`, `metal_plate_04` y `rubber_tiles`) y ave (`fabric_leather_02` y `rough_wood`). Con ello, todos los candidatos superan el uso de color sólido plano.
 
 **Esta lista registra presencia en el código, no resultados de ejecución ni aprobación de una clasificación de objetos o animaciones.**
 
@@ -30,7 +30,7 @@ Fuente: [`../proyecto_grafica/Proyecto Final.pdf`](../proyecto_grafica/Proyecto%
 
 - [x] Recreación 3D en OpenGL de una fachada y un espacio: fachada y estadio abierto dibujados en `main.cpp`.
 - [ ] Imágenes de referencia de la fachada y el espacio, con **al menos siete objetos presentes en la referencia** y fidelidad respecto a ella: no hay referencia identificada en el proyecto; sin ella no puede comprobarse la correspondencia ni el realismo comparado.
-- [ ] Al menos **7 objetos diferentes** con geometría **y texturizado adecuados**: hay más de siete tipos de geometría, pero algunos candidatos (porterías, portero, balón, ave, drones, trofeo) usan textura de un solo color. No se cuentan repeticiones ni puertas, ventanas, escaleras u otros detalles de ambientación para llegar a siete.
+- [x] Al menos **7 objetos diferentes** con geometría **y texturizado adecuados**: implementado completamente en el código. Los objetos diferenciados con textura PBR/imagen son: (1) Cancha (`Grass005`), (2) Pista atlética (`running_track`), (3) Gradas y butacas (`gravel_concrete` y `old_wooden_floor`), (4) Porterías (`metal_plate_02` y `fabric_leather_01`), (5) Trofeo (`trophy_gold`, `marble_01` y `dark_wood`), (6) Balón de fútbol (`leather_white` y `fabric_leather_01`), (7) Drones de vigilancia (`blue_metal_plate`, `metal_plate_04`, `rubber_tiles`), (8) Ave (`fabric_leather_02` y `rough_wood`), (9) Uniformes (Pumas, Atlante, Árbitro, Portero) y (10) Torres de iluminación (`worn_shutter`).
 - [x] Cada modelo recreado o descargado pesa menos de 100 MB: el OBJ más grande encontrado en `Configinicial/Models/` mide aproximadamente 69 MB; los demás son menores.
 - [ ] Usar el **código base del profesor**: el proyecto conserva `Camera.h`, `Shader.h`, shaders y estructura OpenGL, pero el origen exacto de la base docente no está documentado aquí; no se puede dar por demostrado solo por los nombres.
 - [x] Escenario sin instalaciones UNAM, oficinas gubernamentales ni otro recinto identificado como restringido: el código recrea un estadio ficticio con equipos de fútbol, no una instalación identificada de esas categorías.

@@ -85,7 +85,7 @@ void drawSolidSphere(GLint modelLoc, const glm::mat4& parent, glm::vec3 position
 void drawTrees(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texBark, GLuint texLeavesDark, GLuint texLeavesLight);
-void drawBird(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+void drawBird(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texBird, GLuint texBeak, float elapsed);
 void drawFireworks(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
@@ -101,7 +101,7 @@ void drawCrowd(GLint modelLoc, GLuint VAO, GLuint jerseyVAO, GLuint headVAO,
     GLuint texHead, const GLuint crowdHeads[4], GLuint texPumasShorts, GLuint texAtlanteShorts,
     GLuint texHeadJoy = 0, GLuint texHeadAngry = 0, GLuint texHeadSad = 0, GLuint texHeadSurprise = 0);
 int crowdCelebratingSide();
-void drawDrone(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+void drawDrone(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     glm::vec3 position, glm::vec3 target, float elapsed,
     GLuint texBody, GLuint texBlades, GLuint texMetal, GLuint texLens);
@@ -669,8 +669,18 @@ int main()
     if (!texLeavesDark) texLeavesDark = CreateSolidColorTexture(35, 102, 47);
     GLuint texLeavesLight = LoadDiffuseTexture("Models/Textures/LeafSet024_Light.jpg");
     if (!texLeavesLight) texLeavesLight = CreateSolidColorTexture(62, 141, 67);
-    GLuint texBird = CreateSolidColorTexture(83, 89, 96);
-    GLuint texBeak = CreateSolidColorTexture(241, 167, 52);
+    GLuint texBird = LoadDiffuseTexture("Models/Textures/fabric_leather_02_diff_1k.jpg");
+    if (!texBird) texBird = CreateSolidColorTexture(83, 89, 96);
+    GLuint texBeak = LoadDiffuseTexture("Models/Textures/rough_wood_diff_1k.jpg");
+    if (!texBeak) texBeak = CreateSolidColorTexture(241, 167, 52);
+    GLuint texDroneBody = LoadDiffuseTexture("Models/Textures/blue_metal_plate_diff_1k.jpg");
+    if (!texDroneBody) texDroneBody = CreateSolidColorTexture(35, 35, 55);
+    GLuint texDroneArm = LoadDiffuseTexture("Models/Textures/metal_plate_04_diff_1k.jpg");
+    if (!texDroneArm) texDroneArm = CreateSolidColorTexture(130, 137, 145);
+    GLuint texDroneRotor = LoadDiffuseTexture("Models/Textures/rubber_tiles_diff_1k.jpg");
+    if (!texDroneRotor) texDroneRotor = CreateSolidColorTexture(20, 20, 20);
+    GLuint texDroneLens = LoadDiffuseTexture("Models/Textures/metal_plate_02_diff_1k.jpg");
+    if (!texDroneLens) texDroneLens = CreateSolidColorTexture(25, 70, 210);
     GLuint texGold = LoadDiffuseTexture("Models/Textures/trophy_gold_diff_1k.jpg");
     if (!texGold) texGold = CreateSolidColorTexture(255, 206, 56);
     GLuint texMarble = LoadDiffuseTexture("Models/Textures/marble_01_diff_1k.jpg");
@@ -1117,9 +1127,9 @@ int main()
             animationClock, texGold, texMarble, texDarkWood);
         for (int i = 0; i < 2; ++i) {
             if (activeCamera == i + 1) continue;
-            drawDrone(modelLoc, VAO, modelTemp, whiteMesh, blackMesh,
+            drawDrone(modelLoc, textureModeLoc, VAO, modelTemp, whiteMesh, blackMesh,
                 broadcastCameraPositions[i], trackedBallPosition, animationClock,
-                texShorts, texBlack, texFloodlight, texBlue);
+                texDroneBody, texDroneRotor, texDroneArm, texDroneLens);
         }
         drawFloodlightTowers(modelLoc, textureModeLoc, VAO, modelTemp, texTowerMetal);
         glUniform1i(textureModeLoc, 0);
@@ -1130,7 +1140,7 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texSpecular);
         glActiveTexture(GL_TEXTURE0);
-        drawBird(modelLoc, VAO, modelTemp, whiteMesh, blackMesh,
+        drawBird(modelLoc, textureModeLoc, VAO, modelTemp, whiteMesh, blackMesh,
             texBird, texBeak, animationClock);
         if (fireworksActive) {
             float elapsed = animationClock - fireworksStartTime;
@@ -1218,6 +1228,7 @@ int main()
     GLuint textures[] = { texGrass, texWhite, texBlack, texBlue, texPumas, texRed, texAtlante, texRefereeJersey,
                          texGoalkeeperJersey, texBallWhite, texBallBlack,
                          texHeadJoy, texHeadAngry, texHeadSad, texHeadSurprise,
+                         texDroneBody, texDroneArm, texDroneRotor, texDroneLens,
                          texShorts, texSkin, texShoes, texPosts, texNet,
                          texSpecular, texBark, texLeavesDark,
                          texLeavesLight, texBird, texBeak, texGold, texMarble, texDarkWood, texFloodlight, texTowerMetal, texConcrete, texWalkway, texRunningTrack, texWood, texAsphalt, texFacade, texGravelConcrete };
@@ -2254,7 +2265,7 @@ void drawTrees(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
     }
 }
 
-void drawBird(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+void drawBird(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texBird, GLuint texBeak, float elapsed)
 {
@@ -2270,10 +2281,13 @@ void drawBird(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     bird = glm::rotate(bird, glm::radians(4.0f * sinf(elapsed * 0.8f)),
         glm::vec3(0.0f, 0.0f, 1.0f));
 
+    glUniform1i(textureModeLoc, 6);
     drawSolidSphere(modelLoc, bird, glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(0.55f, 0.20f, 0.24f), whiteMesh, blackMesh, texBird);
     drawSolidSphere(modelLoc, bird, glm::vec3(0.48f, 0.12f, 0.0f),
         glm::vec3(0.23f, 0.23f, 0.20f), whiteMesh, blackMesh, texBird);
+
+    glUniform1i(textureModeLoc, 7);
     drawCube(modelLoc, VAO, bird, glm::vec3(0.72f, 0.07f, 0.0f),
         glm::vec3(0.24f, 0.09f, 0.14f), texBeak);
     drawCube(modelLoc, VAO, bird, glm::vec3(-0.64f, 0.05f, 0.0f),
@@ -2291,6 +2305,7 @@ void drawBird(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
         drawCube(modelLoc, VAO, outerWing, glm::vec3(-0.12f, 0.0f, side * 0.32f),
             glm::vec3(0.40f, 0.05f, 0.66f), texBird);
     }
+    glUniform1i(textureModeLoc, 0);
 }
 
 void drawFireworks(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
@@ -2617,7 +2632,7 @@ void drawCrowd(GLint modelLoc, GLuint VAO, GLuint jerseyVAO, GLuint headVAO,
     }
 }
 
-void drawDrone(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+void drawDrone(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     glm::vec3 position, glm::vec3 target, float elapsed,
     GLuint texBody, GLuint texBlades, GLuint texMetal, GLuint texLens)
@@ -2629,6 +2644,8 @@ void drawDrone(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     drone = glm::rotate(drone, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
     drone = glm::rotate(drone, glm::radians(1.8f * sinf(elapsed * 2.0f)),
         glm::vec3(0.0f, 0.0f, 1.0f));
+
+    glUniform1i(textureModeLoc, 7);
     drawCube(modelLoc, VAO, drone, glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(1.45f, 0.32f, 0.95f), texBody);
     drawCube(modelLoc, VAO, drone, glm::vec3(0.1f, 0.22f, 0.0f),
@@ -2638,13 +2655,16 @@ void drawDrone(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
             glm::vec3 rotorCenter(sx * 1.0f, 0.10f, sz * 1.0f);
             float armYaw = std::atan2(-static_cast<float>(sz), static_cast<float>(sx));
             glm::mat4 arm = glm::rotate(drone, armYaw, glm::vec3(0.0f, 1.0f, 0.0f));
+            glUniform1i(textureModeLoc, 7);
             drawCube(modelLoc, VAO, arm, glm::vec3(0.69f, 0.04f, 0.0f),
                 glm::vec3(1.46f, 0.11f, 0.13f), texMetal);
+            glUniform1i(textureModeLoc, 6);
             drawSolidSphere(modelLoc, drone, rotorCenter,
                 glm::vec3(0.25f, 0.13f, 0.25f), whiteMesh, blackMesh, texBody);
             glm::mat4 rotor = glm::translate(drone, rotorCenter + glm::vec3(0.0f, 0.16f, 0.0f));
             rotor = glm::rotate(rotor, (sx * sz) * elapsed * 31.0f,
                 glm::vec3(0.0f, 1.0f, 0.0f));
+            glUniform1i(textureModeLoc, 7);
             drawCube(modelLoc, VAO, rotor, glm::vec3(0.0f),
                 glm::vec3(1.08f, 0.035f, 0.11f), texBlades);
             drawCube(modelLoc, VAO, rotor, glm::vec3(0.0f),
@@ -2653,10 +2673,13 @@ void drawDrone(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
                 glm::vec3(0.10f, 0.55f, 0.10f), texMetal);
         }
     }
+    glUniform1i(textureModeLoc, 7);
     drawCube(modelLoc, VAO, drone, glm::vec3(0.41f, -0.30f, 0.0f),
         glm::vec3(0.50f, 0.34f, 0.40f), texBody);
+    glUniform1i(textureModeLoc, 6);
     drawSolidSphere(modelLoc, drone, glm::vec3(0.68f, -0.30f, 0.0f),
         glm::vec3(0.14f, 0.14f, 0.14f), whiteMesh, blackMesh, texLens);
+    glUniform1i(textureModeLoc, 0);
 }
 
 void drawTrophy(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
