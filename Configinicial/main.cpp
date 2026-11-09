@@ -74,6 +74,8 @@ struct BallMesh {
 };
 
 void createBall(BallMesh& whiteMesh, BallMesh& blackMesh);
+void createRunningTrack(BallMesh& mesh);
+void drawRunningTrack(GLint modelLoc, const glm::mat4& scene, const BallMesh& mesh, GLuint texture);
 void drawBall(GLint modelLoc, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texWhite, GLuint texBlack, float rotation, glm::vec3 position);
@@ -93,7 +95,7 @@ void drawFloodlightTowers(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
 void drawFloodlightPanels(GLint modelLoc, GLuint VAO);
 void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* cameraBase, Model* cameraHead);
 void drawBleachers(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
-    GLuint texConcrete, GLuint texSideWall, GLuint texRed, GLuint texWhite, GLuint texWalkway, GLuint texMetal);
+    GLuint texConcrete, GLuint texSideWall, GLuint texWood, GLuint texWalkway, GLuint texMetal);
 void drawCrowd(GLint modelLoc, GLuint VAO, GLuint jerseyVAO, GLuint headVAO,
     const glm::mat4& scene, GLuint texPumas, GLuint texAtlante,
     GLuint texHead, const GLuint crowdHeads[4], GLuint texPumasShorts, GLuint texAtlanteShorts);
@@ -654,15 +656,21 @@ int main()
     GLuint texConcrete = CreateSolidColorTexture(183, 181, 175);
     GLuint texFacade = LoadDiffuseTexture("Models/Textures/concrete_diff_1k.jpg");
     if (!texFacade) texFacade = CreateSolidColorTexture(183, 181, 175);
-    GLuint texRoughConcrete = LoadDiffuseTexture("Models/Textures/rough_concrete_diff_1k.jpg");
-    if (!texRoughConcrete) texRoughConcrete = CreateSolidColorTexture(183, 181, 175);
+    GLuint texGravelConcrete = LoadDiffuseTexture("Models/Textures/gravel_concrete_03_diff_1k.jpg");
+    if (!texGravelConcrete) texGravelConcrete = CreateSolidColorTexture(183, 181, 175);
     GLuint texWalkway = CreateSolidColorTexture(112, 108, 103);
+    GLuint texRunningTrack = LoadDiffuseTexture("Models/Textures/running_track_diff_1k.jpg");
+    if (!texRunningTrack) texRunningTrack = CreateSolidColorTexture(77, 112, 135);
+    GLuint texWood = LoadDiffuseTexture("Models/Textures/old_wooden_floor_02_diff_1k.jpg");
+    if (!texWood) texWood = CreateSolidColorTexture(100, 65, 30);
     GLuint texAsphalt = LoadDiffuseTexture("Models/Textures/clean_asphalt_diff_1k.jpg");
     if (!texAsphalt) texAsphalt = CreateSolidColorTexture(112, 108, 103);
 
     // spherical ball 
     BallMesh whiteMesh, blackMesh;
     createBall(whiteMesh, blackMesh);
+    BallMesh runningTrackMesh;
+    createRunningTrack(runningTrackMesh);
 
     // Set texture units
     lightingShader.Use();
@@ -752,28 +760,31 @@ int main()
         glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.specular"), 0.3f, 0.3f, 0.3f);
 
 
-        // Point light 1
+        // Each tower illuminates the pitch; the first movable light stays at its original position.
         glm::vec3 lightColor;
         lightColor.x = abs(sin(glfwGetTime() * Light1.x));
         lightColor.y = abs(sin(glfwGetTime() * Light1.y));
         lightColor.z = sin(glfwGetTime() * Light1.z);
-        glm::vec3 stadiumPointPosition = pointLightPositions[0];
-        glm::vec3 stadiumDiffuse = glm::vec3(1.4f, 1.3f, 1.1f) + 0.35f * lightColor;
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].position"),
-            stadiumPointPosition.x, stadiumPointPosition.y, stadiumPointPosition.z);
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].ambient"), 0.24f, 0.23f, 0.20f);
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].diffuse"),
-            stadiumDiffuse.x * stadiumLightIntensity,
-            stadiumDiffuse.y * stadiumLightIntensity,
-            stadiumDiffuse.z * stadiumLightIntensity);
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].specular"), 0.7f, 0.7f, 0.6f);
-        glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].constant"), 1.0f);
-        glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].linear"), 0.006f);
-        glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].quadratic"), 0.0005f);
+        for (int i = 0; i < 4; ++i) {
+            glm::vec3 p = i == 1 ? pointLightPositions[0] : floodlightPositions[i] + glm::vec3(0.0f, 17.5f, 0.0f);
+            std::string name = "pointLights[" + std::to_string(i) + "].";
+            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "position").c_str()), p.x, p.y, p.z);
+            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "ambient").c_str()),
+                0.06f * stadiumLightIntensity, 0.06f * stadiumLightIntensity, 0.05f * stadiumLightIntensity);
+            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "diffuse").c_str()),
+                (0.55f + 0.1f * lightColor.x) * stadiumLightIntensity,
+                (0.50f + 0.1f * lightColor.y) * stadiumLightIntensity,
+                (0.43f + 0.1f * lightColor.z) * stadiumLightIntensity);
+            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "specular").c_str()),
+                0.25f * stadiumLightIntensity, 0.25f * stadiumLightIntensity, 0.22f * stadiumLightIntensity);
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "constant").c_str()), 1.0f);
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "linear").c_str()), 0.006f);
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "quadratic").c_str()), 0.0005f);
+        }
 
         for (int team = 0; team < 2; ++team) {
             for (int lamp = 0; lamp < 2; ++lamp) {
-                int lightIndex = 1 + team * 2 + lamp;
+                int lightIndex = 4 + team * 2 + lamp;
                 std::string name = "pointLights[" + std::to_string(lightIndex) + "].";
                 glm::vec3 p = getBusHeadlightPosition(teamBuses[team], lamp);
                 glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "position").c_str()), p.x, p.y, p.z);
@@ -787,23 +798,25 @@ int main()
             }
         }
 
-        // SpotLight
-        glm::vec3 stadiumSpotPosition = floodlightPositions[2] + glm::vec3(0.0f, 17.5f, 0.0f);
-        glm::vec3 stadiumSpotDirection = glm::normalize(glm::vec3(42.0f, 0.0f, 0.0f) - stadiumSpotPosition);
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "spotLight.position"),
-            stadiumSpotPosition.x, stadiumSpotPosition.y, stadiumSpotPosition.z);
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "spotLight.direction"),
-            stadiumSpotDirection.x, stadiumSpotDirection.y, stadiumSpotDirection.z);
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "spotLight.ambient"), 0.1f, 0.1f, 0.09f);
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "spotLight.diffuse"),
-            1.5f * stadiumLightIntensity, 1.4f * stadiumLightIntensity,
-            1.2f * stadiumLightIntensity);
-        glUniform3f(glGetUniformLocation(lightingShader.Program, "spotLight.specular"), 0.6f, 0.6f, 0.5f);
-        glUniform1f(glGetUniformLocation(lightingShader.Program, "spotLight.constant"), 1.0f);
-        glUniform1f(glGetUniformLocation(lightingShader.Program, "spotLight.linear"), 0.006f);
-        glUniform1f(glGetUniformLocation(lightingShader.Program, "spotLight.quadratic"), 0.0005f);
-        glUniform1f(glGetUniformLocation(lightingShader.Program, "spotLight.cutOff"), glm::cos(glm::radians(42.0f)));
-        glUniform1f(glGetUniformLocation(lightingShader.Program, "spotLight.outerCutOff"), glm::cos(glm::radians(50.0f)));
+        for (int i = 0; i < 4; ++i) {
+            glm::vec3 p = floodlightPositions[i] + glm::vec3(0.0f, 17.5f, 0.0f);
+            glm::vec3 direction = glm::normalize(-p);
+            std::string name = "spotLights[" + std::to_string(i) + "].";
+            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "position").c_str()), p.x, p.y, p.z);
+            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "direction").c_str()),
+                direction.x, direction.y, direction.z);
+            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "ambient").c_str()),
+                0.03f * stadiumLightIntensity, 0.03f * stadiumLightIntensity, 0.03f * stadiumLightIntensity);
+            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "diffuse").c_str()),
+                0.9f * stadiumLightIntensity, 0.84f * stadiumLightIntensity, 0.72f * stadiumLightIntensity);
+            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "specular").c_str()),
+                0.25f * stadiumLightIntensity, 0.25f * stadiumLightIntensity, 0.22f * stadiumLightIntensity);
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "constant").c_str()), 1.0f);
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "linear").c_str()), 0.006f);
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "quadratic").c_str()), 0.0005f);
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "cutOff").c_str()), glm::cos(glm::radians(42.0f)));
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "outerCutOff").c_str()), glm::cos(glm::radians(50.0f)));
+        }
 
         // Set material properties
         glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 5.0f);
@@ -855,6 +868,7 @@ int main()
         glUniform1i(importedTextureLoc, 0);
         drawPerimeter(modelLoc, textureModeLoc, VAO, modelTemp, texConcrete, texFacade, texAsphalt, texWhite);
         drawField(modelLoc, textureModeLoc, VAO, modelTemp, texGrass, texWhite);
+        drawRunningTrack(modelLoc, modelTemp, runningTrackMesh, texRunningTrack);
         drawGoal(modelLoc, VAO, modelTemp, -52.5f, -1.0f, texPosts, texNet);
         drawGoal(modelLoc, VAO, modelTemp, 52.5f, 1.0f, texPosts, texNet);
 
@@ -1047,8 +1061,8 @@ int main()
         if (ballVisible)
             drawBall(modelLoc, modelTemp, whiteMesh, blackMesh,
                 texWhite, texBlack, rotBall, ballPosition);
-        drawBleachers(modelLoc, textureModeLoc, VAO, modelTemp, texRoughConcrete, texFacade,
-            texRed, texWhite, texWalkway, texFloodlight);
+        drawBleachers(modelLoc, textureModeLoc, VAO, modelTemp, texGravelConcrete, texFacade,
+            texWood, texWalkway, texFloodlight);
         drawCrowd(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
             texPumas, texAtlante, texHead, crowdHeads, texShorts, texRed);
         drawTrees(modelLoc, textureModeLoc, VAO, modelTemp, whiteMesh, blackMesh,
@@ -1117,6 +1131,8 @@ int main()
         GLint lampModelLoc = glGetUniformLocation(lampShader.Program, "model");
         GLint lampViewLoc = glGetUniformLocation(lampShader.Program, "view");
         GLint lampProjectionLoc = glGetUniformLocation(lampShader.Program, "projection");
+        glUniform1f(glGetUniformLocation(lampShader.Program, "brightness"),
+            std::min(1.0f, 0.20f + 0.45f * stadiumLightIntensity));
         glUniformMatrix4fv(lampViewLoc, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(lampProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
         drawFloodlightPanels(lampModelLoc, VAO);
@@ -1143,6 +1159,7 @@ int main()
     //DELETE BLOCK. THIS FREE MEMORY 
     deleteBallMesh(whiteMesh);
     deleteBallMesh(blackMesh);
+    deleteBallMesh(runningTrackMesh);
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteVertexArrays(1, &jerseyVAO);
@@ -1155,7 +1172,7 @@ int main()
     GLuint textures[] = { texGrass, texWhite, texBlack, texBlue, texPumas, texRed, texAtlante, texRefereeJersey,
                          texShorts, texSkin, texShoes, texPosts, texNet,
                          texSpecular, texBark, texLeavesDark,
-                         texLeavesLight, texBird, texBeak, texGold, texFloodlight, texTowerMetal, texConcrete, texWalkway, texAsphalt, texFacade, texRoughConcrete };
+                         texLeavesLight, texBird, texBeak, texGold, texFloodlight, texTowerMetal, texConcrete, texWalkway, texRunningTrack, texWood, texAsphalt, texFacade, texGravelConcrete };
     glDeleteTextures(sizeof(textures) / sizeof(textures[0]), textures);
     for (int i = 0; i < 2; ++i) busBodyModels[i].reset();
     for (int i = 0; i < 6; ++i) busWheelModels[i].reset();
@@ -1829,6 +1846,80 @@ void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
     }
 }
 
+void createRunningTrack(BallMesh& mesh)
+{
+    constexpr float halfLength = 52.5f, halfWidth = 34.0f;
+    constexpr float innerRadius = 0.25f, trackWidth = 14.25f;
+    constexpr int curveSteps = 12;
+    const float pi = 3.14159265358979323846f;
+    static_assert(halfLength + innerRadius + trackWidth < 103.0f &&
+        halfWidth + innerRadius + trackWidth < 49.45f && innerRadius > 0.12f,
+        "Track must clear the walls, stands and pitch markings");
+    struct Sample { glm::vec2 inner, outward; float distance; };
+    std::vector<Sample> path;
+    float distance = 0.0f;
+    auto addSample = [&](glm::vec2 inner, glm::vec2 outward, float length) {
+        distance += length;
+        path.push_back({inner, outward, distance});
+    };
+    addSample(glm::vec2(-halfLength, -halfWidth - innerRadius), glm::vec2(0, -1), 0.0f);
+    addSample(glm::vec2( halfLength, -halfWidth - innerRadius), glm::vec2(0, -1), 2.0f * halfLength);
+    for (int corner = 0; corner < 4; ++corner) {
+        glm::vec2 center(corner < 2 ? halfLength : -halfLength,
+            corner == 0 || corner == 3 ? -halfWidth : halfWidth);
+        for (int step = 1; step <= curveSteps; ++step) {
+            float angle = -pi * 0.5f + (corner + static_cast<float>(step) / curveSteps) * pi * 0.5f;
+            glm::vec2 normal(cosf(angle), sinf(angle));
+            addSample(center + innerRadius * normal, normal, pi * innerRadius / (2.0f * curveSteps));
+        }
+        if (corner == 0)
+            addSample(glm::vec2(halfLength + innerRadius, halfWidth), glm::vec2(1, 0), 2.0f * halfWidth);
+        if (corner == 1)
+            addSample(glm::vec2(-halfLength, halfWidth + innerRadius), glm::vec2(0, 1), 2.0f * halfLength);
+        if (corner == 2)
+            addSample(glm::vec2(-halfLength - innerRadius, -halfWidth), glm::vec2(-1, 0), 2.0f * halfWidth);
+    }
+
+    std::vector<GLfloat> vertices;
+    auto vertex = [&vertices](glm::vec2 point, float distance, float across) {
+        vertices.insert(vertices.end(), {point.x, 0.015f, point.y,
+            0.0f, 1.0f, 0.0f, distance / 4.0f, across / 4.0f});
+    };
+    for (size_t i = 1; i < path.size(); ++i) {
+        const Sample& a = path[i - 1];
+        const Sample& b = path[i];
+        vertex(a.inner, a.distance, 0.0f);
+        vertex(b.inner, b.distance, 0.0f);
+        vertex(a.inner + trackWidth * a.outward, a.distance, trackWidth);
+        vertex(b.inner, b.distance, 0.0f);
+        vertex(b.inner + trackWidth * b.outward, b.distance, trackWidth);
+        vertex(a.inner + trackWidth * a.outward, a.distance, trackWidth);
+    }
+    mesh.vertexCount = static_cast<GLsizei>(vertices.size() / 8);
+    glGenVertexArrays(1, &mesh.VAO);
+    glGenBuffers(1, &mesh.VBO);
+    glBindVertexArray(mesh.VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
+}
+
+void drawRunningTrack(GLint modelLoc, const glm::mat4& scene, const BallMesh& mesh, GLuint texture)
+{
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(scene));
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindVertexArray(mesh.VAO);
+    glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    glBindVertexArray(0);
+}
+
 void drawPerimeter(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     const glm::mat4& scene, GLuint texWall, GLuint texFacade, GLuint texFloor, GLuint texAccent)
 {
@@ -2321,12 +2412,14 @@ void drawFloodlightPanels(GLint modelLoc, GLuint VAO)
         const glm::vec3& p = floodlightPositions[i];
         for (int row = 0; row < 2; ++row) {
             for (int col = 0; col < 6; ++col) {
-                glm::vec3 lampPosition = p + glm::vec3((col - 2.5f) * 0.70f,
-                    17.13f + row * 0.62f, p.z < 0 ? 0.27f : -0.27f);
-                glm::mat4 m = glm::translate(glm::mat4(1.0f), lampPosition);
-                m = glm::scale(m, glm::vec3(0.56f, 0.44f, 0.12f));
-                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(m));
-                glDrawArrays(GL_TRIANGLES, 0, 36);
+                for (int face = -1; face <= 1; face += 2) {
+                    glm::vec3 lampPosition = p + glm::vec3((col - 2.5f) * 0.70f,
+                        17.13f + row * 0.62f, face * 0.27f);
+                    glm::mat4 m = glm::translate(glm::mat4(1.0f), lampPosition);
+                    m = glm::scale(m, glm::vec3(0.56f, 0.44f, 0.12f));
+                    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(m));
+                    glDrawArrays(GL_TRIANGLES, 0, 36);
+                }
             }
         }
     }
@@ -2369,11 +2462,9 @@ void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* ca
 
 
 void drawBleachers(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
-    GLuint texConcrete, GLuint texSideWall, GLuint texRed, GLuint texWhite, GLuint texWalkway, GLuint texMetal)
+    GLuint texConcrete, GLuint texSideWall, GLuint texWood, GLuint texWalkway, GLuint texMetal)
 {
     for (int side = -1; side <= 1; side += 2) {
-        drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, -0.025f, side * 42.0f),
-            glm::vec3(106.0f, 0.045f, 15.5f), texWalkway);
         for (int p = -9; p <= 9; ++p) {
             float x = p * 5.0f;
             drawCube(modelLoc, VAO, scene, glm::vec3(x, 0.53f, side * 49.45f),
@@ -2387,18 +2478,17 @@ void drawBleachers(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::
             glUniform1i(textureModeLoc, 5);
             drawCube(modelLoc, VAO, scene, glm::vec3(0.0f, height * 0.5f, z),
                 glm::vec3(90.0f, height, 2.0f), texConcrete);
-            glUniform1i(textureModeLoc, 0);
             for (int section = 0; section < 11; ++section) {
                 if (section == 5) continue;
                 float x = (section - 5) * 7.55f;
-                GLuint seatColor = ((section + row) % 2 == 0) ? texRed : texWhite;
                 drawCube(modelLoc, VAO, scene,
                     glm::vec3(x, height + 0.12f, z - side * 0.15f),
-                    glm::vec3(7.15f, 0.23f, 1.15f), seatColor);
+                    glm::vec3(7.15f, 0.23f, 1.15f), texWood);
                 drawCube(modelLoc, VAO, scene,
                     glm::vec3(x, height + 0.40f, z + side * 0.48f),
-                    glm::vec3(7.15f, 0.60f, 0.19f), seatColor);
+                    glm::vec3(7.15f, 0.60f, 0.19f), texWood);
             }
+            glUniform1i(textureModeLoc, 0);
             drawCube(modelLoc, VAO, scene,
                 glm::vec3(0.0f, height + 0.025f, z),
                 glm::vec3(5.9f, 0.05f, 1.85f), texWalkway);
