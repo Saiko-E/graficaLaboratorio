@@ -61,7 +61,7 @@ void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent, glm::vec3 pos
 void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene, GLuint texGrass, GLuint texWhite);
 void drawPerimeter(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     const glm::mat4& scene, GLuint texWall, GLuint texFacade, GLuint texFloor, GLuint texAccent);
-void drawGoal(GLint modelLoc, GLuint VAO, const glm::mat4& scene, float x, float direction, GLuint texPosts, GLuint texNet);
+void drawGoal(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene, float x, float direction, GLuint texPosts, GLuint texNet);
 void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, const glm::mat4& scene,
     glm::vec3 position, float yaw, GLuint texJersey, GLuint texHead,
     GLuint texShorts, GLuint texSkin, GLuint texShoes,
@@ -76,7 +76,7 @@ struct BallMesh {
 void createBall(BallMesh& whiteMesh, BallMesh& blackMesh);
 void createRunningTrack(BallMesh& mesh);
 void drawRunningTrack(GLint modelLoc, const glm::mat4& scene, const BallMesh& mesh, GLuint texture);
-void drawBall(GLint modelLoc, const glm::mat4& scene,
+void drawBall(GLint modelLoc, GLint textureModeLoc, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texWhite, GLuint texBlack, float rotation, glm::vec3 position);
 void deleteBallMesh(BallMesh& mesh);
@@ -104,7 +104,7 @@ void drawDrone(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     glm::vec3 position, glm::vec3 target, float elapsed,
     GLuint texBody, GLuint texBlades, GLuint texMetal, GLuint texLens);
-void drawTrophy(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+void drawTrophy(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     float elapsed, GLuint texGold, GLuint texBase, GLuint texWhite);
 glm::mat4 getBroadcastView();
@@ -617,6 +617,12 @@ int main()
     if (!texAtlante) texAtlante = CreateSolidColorTexture(245, 245, 245);
     GLuint texRefereeJersey = LoadDiffuseTexture("Models/Textures/referee_yellow_jersey.png");
     if (!texRefereeJersey) texRefereeJersey = CreateSolidColorTexture(247, 205, 45);
+    GLuint texGoalkeeperJersey = LoadDiffuseTexture("Models/Textures/goalkeeper_green_jersey.png");
+    if (!texGoalkeeperJersey) texGoalkeeperJersey = CreateSolidColorTexture(32, 185, 95);
+    GLuint texBallWhite = LoadDiffuseTexture("Models/Textures/leather_white_diff_1k.jpg");
+    if (!texBallWhite) texBallWhite = texWhite;
+    GLuint texBallBlack = LoadDiffuseTexture("Models/Textures/fabric_leather_01_diff_1k.jpg");
+    if (!texBallBlack) texBallBlack = texBlack;
     GLuint texShorts = CreateSolidColorTexture(35, 35, 55);
     GLuint texSkin = CreateSolidColorTexture(205, 150, 105);
     GLuint texHead = LoadDiffuseTexture("Models/Textures/player_head_textures/atlas_emociones/atlas_neutral.png");
@@ -638,8 +644,10 @@ int main()
     }
     glBindTexture(GL_TEXTURE_2D, 0);
     GLuint texShoes = CreateSolidColorTexture(30, 30, 30);
-    GLuint texPosts = CreateSolidColorTexture(240, 240, 240);
-    GLuint texNet = CreateSolidColorTexture(178, 190, 190);
+    GLuint texPosts = LoadDiffuseTexture("Models/Textures/metal_plate_02_diff_1k.jpg");
+    if (!texPosts) texPosts = CreateSolidColorTexture(240, 240, 240);
+    GLuint texNet = LoadDiffuseTexture("Models/Textures/fabric_leather_01_diff_1k.jpg");
+    if (!texNet) texNet = CreateSolidColorTexture(178, 190, 190);
     GLuint texSpecular = CreateSolidColorTexture(35, 35, 35);
     GLuint texBark = LoadDiffuseTexture("Models/Textures/pine_bark_diff_1k.jpg");
     if (!texBark) texBark = CreateSolidColorTexture(110, 73, 43);
@@ -649,7 +657,12 @@ int main()
     if (!texLeavesLight) texLeavesLight = CreateSolidColorTexture(62, 141, 67);
     GLuint texBird = CreateSolidColorTexture(83, 89, 96);
     GLuint texBeak = CreateSolidColorTexture(241, 167, 52);
-    GLuint texGold = CreateSolidColorTexture(255, 206, 56);
+    GLuint texGold = LoadDiffuseTexture("Models/Textures/trophy_gold_diff_1k.jpg");
+    if (!texGold) texGold = CreateSolidColorTexture(255, 206, 56);
+    GLuint texMarble = LoadDiffuseTexture("Models/Textures/marble_01_diff_1k.jpg");
+    if (!texMarble) texMarble = CreateSolidColorTexture(18, 18, 20);
+    GLuint texDarkWood = LoadDiffuseTexture("Models/Textures/dark_wood_diff_1k.jpg");
+    if (!texDarkWood) texDarkWood = CreateSolidColorTexture(65, 42, 22);
     GLuint texFloodlight = CreateSolidColorTexture(130, 137, 145);
     GLuint texTowerMetal = LoadDiffuseTexture("Models/Textures/worn_shutter_diff_1k.jpg");
     if (!texTowerMetal) texTowerMetal = CreateSolidColorTexture(55, 53, 51);
@@ -869,8 +882,8 @@ int main()
         drawPerimeter(modelLoc, textureModeLoc, VAO, modelTemp, texConcrete, texFacade, texAsphalt, texWhite);
         drawField(modelLoc, textureModeLoc, VAO, modelTemp, texGrass, texWhite);
         drawRunningTrack(modelLoc, modelTemp, runningTrackMesh, texRunningTrack);
-        drawGoal(modelLoc, VAO, modelTemp, -52.5f, -1.0f, texPosts, texNet);
-        drawGoal(modelLoc, VAO, modelTemp, 52.5f, 1.0f, texPosts, texNet);
+        drawGoal(modelLoc, textureModeLoc, VAO, modelTemp, -52.5f, -1.0f, texPosts, texNet);
+        drawGoal(modelLoc, textureModeLoc, VAO, modelTemp, 52.5f, 1.0f, texPosts, texNet);
 
         const bool penaltyPlayersVisible = matchScene == SCENE_PENALTIES;
         if (penaltyPlayersVisible) {
@@ -883,9 +896,9 @@ int main()
 
             drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
                 glm::vec3(51.2f, 0.0f, keeperPositionZ), -90.0f,
-                penaltyKickerTeam == 0 ? texAtlante : texPumas,
+                texGoalkeeperJersey,
                 texHead,
-                penaltyKickerTeam == 0 ? texRed : texShorts,
+                texShorts,
                 texSkin, texShoes, 0.0f, keeperDive, 0.0f, 1, texWhite);
         }
 
@@ -1059,16 +1072,16 @@ int main()
                 refereePosition, 180.0f, texRefereeJersey, texHead, texBlack, texSkin, texShoes);
         }
         if (ballVisible)
-            drawBall(modelLoc, modelTemp, whiteMesh, blackMesh,
-                texWhite, texBlack, rotBall, ballPosition);
+            drawBall(modelLoc, textureModeLoc, modelTemp, whiteMesh, blackMesh,
+                texBallWhite, texBallBlack, rotBall, ballPosition);
         drawBleachers(modelLoc, textureModeLoc, VAO, modelTemp, texGravelConcrete, texFacade,
             texWood, texWalkway, texFloodlight);
         drawCrowd(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
             texPumas, texAtlante, texHead, crowdHeads, texShorts, texRed);
         drawTrees(modelLoc, textureModeLoc, VAO, modelTemp, whiteMesh, blackMesh,
             texBark, texLeavesDark, texLeavesLight);
-        drawTrophy(modelLoc, VAO, modelTemp, whiteMesh, blackMesh,
-            animationClock, texGold, texBlack, texWhite);
+        drawTrophy(modelLoc, textureModeLoc, VAO, modelTemp, whiteMesh, blackMesh,
+            animationClock, texGold, texMarble, texDarkWood);
         for (int i = 0; i < 2; ++i) {
             if (activeCamera == i + 1) continue;
             drawDrone(modelLoc, VAO, modelTemp, whiteMesh, blackMesh,
@@ -1170,9 +1183,10 @@ int main()
     glDeleteProgram(skyShader.Program);
     glDeleteTextures(4, crowdHeads);
     GLuint textures[] = { texGrass, texWhite, texBlack, texBlue, texPumas, texRed, texAtlante, texRefereeJersey,
+                         texGoalkeeperJersey, texBallWhite, texBallBlack,
                          texShorts, texSkin, texShoes, texPosts, texNet,
                          texSpecular, texBark, texLeavesDark,
-                         texLeavesLight, texBird, texBeak, texGold, texFloodlight, texTowerMetal, texConcrete, texWalkway, texRunningTrack, texWood, texAsphalt, texFacade, texGravelConcrete };
+                         texLeavesLight, texBird, texBeak, texGold, texMarble, texDarkWood, texFloodlight, texTowerMetal, texConcrete, texWalkway, texRunningTrack, texWood, texAsphalt, texFacade, texGravelConcrete };
     glDeleteTextures(sizeof(textures) / sizeof(textures[0]), textures);
     for (int i = 0; i < 2; ++i) busBodyModels[i].reset();
     for (int i = 0; i < 6; ++i) busWheelModels[i].reset();
@@ -1976,9 +1990,10 @@ void drawPerimeter(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     glUniform1i(textureModeLoc, 0);
 }
 
-void drawGoal(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+void drawGoal(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     float x, float direction, GLuint texPosts, GLuint texNet)
 {
+    glUniform1i(textureModeLoc, 7);
     glm::mat4 parent = glm::translate(scene, glm::vec3(x, 0, 0));
     // Goal posts and crossbar (soccer dimensions: 7.32 x 2.44 m).
     drawCube(modelLoc, VAO, parent, glm::vec3(0, 1.22f, -3.66f),
@@ -2004,6 +2019,7 @@ void drawGoal(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
         drawCube(modelLoc, VAO, parent, glm::vec3(depth / 2.0f, 2.4f, z),
             glm::vec3(1.75f, 0.014f, 0.014f), texNet);
     }
+    glUniform1i(textureModeLoc, 0);
 }
 
 void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, const glm::mat4& scene,
@@ -2139,10 +2155,11 @@ void createBall(BallMesh& whiteMesh, BallMesh& blackMesh)
     CreateBallMesh(blackMesh, blackVertices);
 }
 
-void drawBall(GLint modelLoc, const glm::mat4& scene,
+void drawBall(GLint modelLoc, GLint textureModeLoc, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texWhite, GLuint texBlack, float rotation, glm::vec3 position)
 {
+    glUniform1i(textureModeLoc, 6);
     glm::mat4 model = glm::translate(scene, position);
     model = glm::rotate(model, glm::radians(rotation), glm::vec3(0, 0, 1));
     model = glm::scale(model, glm::vec3(0.11f));
@@ -2155,6 +2172,7 @@ void drawBall(GLint modelLoc, const glm::mat4& scene,
     glBindVertexArray(blackMesh.VAO);
     glDrawArrays(GL_TRIANGLES, 0, blackMesh.vertexCount);
     glBindVertexArray(0);
+    glUniform1i(textureModeLoc, 0);
 }
 
 void deleteBallMesh(BallMesh& mesh)
@@ -2598,10 +2616,11 @@ void drawDrone(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
         glm::vec3(0.14f, 0.14f, 0.14f), whiteMesh, blackMesh, texLens);
 }
 
-void drawTrophy(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
+void drawTrophy(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     float elapsed, GLuint texGold, GLuint texBase, GLuint texWhite)
 {
+    glUniform1i(textureModeLoc, 7);
     bool finalLift = matchScene == SCENE_FINAL;
     glm::mat4 pedestal = glm::translate(scene, finalLift ? glm::vec3(0.0f, -10.0f, 44.0f) : glm::vec3(0.0f, 0.0f, 44.0f));
     if (!finalLift) {
@@ -2621,8 +2640,10 @@ void drawTrophy(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
         glm::vec3(0.22f, 0.55f, 0.22f), texGold);
     drawCube(modelLoc, VAO, trophy, glm::vec3(0.0f, 0.76f, 0.0f),
         glm::vec3(0.70f, 0.13f, 0.70f), texGold);
+    glUniform1i(textureModeLoc, 6);
     drawSolidSphere(modelLoc, trophy, glm::vec3(0.0f, 1.23f, 0.0f),
         glm::vec3(0.63f, 0.56f, 0.55f), whiteMesh, blackMesh, texGold);
+    glUniform1i(textureModeLoc, 7);
     drawCube(modelLoc, VAO, trophy, glm::vec3(0.0f, 1.69f, 0.0f),
         glm::vec3(1.23f, 0.12f, 1.04f), texGold);
     for (int side = -1; side <= 1; side += 2) {
@@ -2633,6 +2654,7 @@ void drawTrophy(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
         drawCube(modelLoc, VAO, trophy, glm::vec3(side * 0.61f, 1.10f, 0.0f),
             glm::vec3(0.43f, 0.10f, 0.12f), texGold);
     }
+    glUniform1i(textureModeLoc, 0);
 }
 
 
