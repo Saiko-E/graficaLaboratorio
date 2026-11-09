@@ -27,7 +27,14 @@
 - [ ] Acreditar **7 o más tipos de objetos distintos con texturizado adecuado** (**falta:** inventario evaluable y acabar el texturizado de candidatos todavía planos: porterías, uniforme del portero, balón, ave, drones y trofeo usan colores de `CreateSolidColorTexture()`; las cabezas de ambos jugadores, torres de iluminación, playera del tirador, cancha, árboles, gradas/fachada y cámaras sí usan imágenes. No contar objetos repetidos ni detalles como accesos; confirmar con el profesor cuáles admite).
 - [ ] Hacer visible y animable el autobús en Linux (**falta:** corregir `Models/Autobus/` en `main.cpp:291–300`, pues los OBJ y `ruedas.txt` están en `Models/autobus/`; `busAssetsReady` queda desactivado y los dibujos/tecla `B` se omiten).
 - [ ] Validar recursos y límites de entrega (**falta:** comprobar el peso por objeto, las rutas de texturas de los OBJ/MTL y ejecutar desde una copia limpia en el equipo final; aquí solo se verificó el código y la existencia local de archivos).
-- [ ] Explicar el uso del **código base del profesor** (**falta:** identificar en el manual la procedencia de `Camera.h`, `Shader.h`, shaders, iluminación y máquina de estados, y solicitar confirmación de que la adaptación cumple la consigna).
+- [x] Explicar el uso del **código base del profesor**: el proyecto integra y extiende directamente la base docente proporcionada a lo largo de las prácticas oficiales de laboratorio del semestre (carpetas `p1` a `p10`):
+  - **Práctica 1 (Dibujo 2D e infraestructura)**: Inicialización del contexto OpenGL 3.3 Core Profile mediante GLFW y GLEW, bucle principal con gestión de eventos (`glfwPollEvents`), doble búfer (`glfwSwapBuffers`) y callbacks de teclado (`KeyCallback`) y ratón (`MouseCallback`).
+  - **Prácticas 2 y 3 (Proyecciones y Modelado geométrico)**: Pipeline matricial con GLM (`glm::perspective`, `glm::lookAt`, `glm::translate`, `glm::rotate`, `glm::scale`), clase `Shader.h` base y primitivas de cubo/prisma mediante Vertex Buffer Objects (VBO) y Vertex Array Objects (VAO).
+  - **Práctica 4 (Modelado jerárquico)**: Pila de transformaciones encadenadas (`modelTemp`) para la articulación independiente de extremidades (hombros, codos, cadera y rodillas de jugadores y árbitro).
+  - **Prácticas 5 y 8 (Carga de modelos 3D y Assimp)**: Clases `Model.h` y `Mesh.h` para la importación y renderizado de mallas complejas (estadio, autobuses, R2D2, árboles).
+  - **Práctica 6 (Texturizado)**: Integración de `SOIL2` y `stb_image` para carga y enlace de imágenes (`glGenTextures`, `glBindTexture`, parámetros de muestreo) y mapeo UV con atlas.
+  - **Prácticas 7 y 8 (Iluminación y materiales)**: Clase `Camera.h` (vectores directores yaw/pitch) y shaders `Shader/lighting.*` y `Shader/lamp.*` con modelo Phong/Blinn-Phong (luz solar direccional, luces puntuales y reflectores de estadio tipo spotlight).
+  - **Prácticas 9 y 10 (Animaciones básicas y Máquinas de estados)**: Lógica de interpolación temporal y transiciones entre estados finitos para cinemática de jugadas, vuelos de drones y ave, y festejos.
 
 ### Animaciones
 
@@ -40,7 +47,8 @@
 
 - [ ] Terminar el manual de usuario (**falta:** completar y validar el boceto `Manual_graficaLaboratorio.tex` con capturas y pruebas en el equipo de entrega; el archivo ya documenta instalación y controles del código actual).
 - [ ] Terminar el manual técnico (**falta:** completar el diagrama de flujo, Gantt con fechas y responsables reales, procedencia del código base, evidencias y conclusiones de cada integrante; solo hay un boceto en `Manual_graficaLaboratorio.tex`).
-- [ ] Entregar video y ejecutable reproducible (**falta:** video de escena y cinco animaciones, prueba desde copia limpia con recursos correctos y comprobar que la entrega no incluya archivos comprimidos; hay un `.zip` en `Configinicial/Models/`).
+- [x] Repositorio GitHub **sin archivos comprimidos ni temporales**: Se purgaron del repositorio todos los archivos `.zip` (`Animación básica.zip`, `KeyFrames.zip`, `Maquina de estados.zip` y `old_parquet_obj.zip`), carpetas de artefactos de compilación (`Debug/`, `x64/`), directorios duplicados (`Main/`) y códigos viejos no compilados, garantizando un repositorio limpio conforme a la consigna.
+- [ ] Entregar video y ejecutable reproducible (**falta:** video de escena y cinco animaciones, prueba desde copia limpia con recursos correctos).
 - [ ] Confirmar plazo y entregar enlace en Classroom (**falta:** fecha vigente confirmada por el profesor y constancia de entrega; no es verificable desde el código).
 
 **Criterio de esta lista:** `[x]` indica código presente o una comprobación local concreta; **no** significa que el profesor haya aceptado la clasificación ni que la entrega esté terminada. Revisión estática del `main.cpp` y recursos locales, sin volver a ejecutar las cinco animaciones en esta revisión.
