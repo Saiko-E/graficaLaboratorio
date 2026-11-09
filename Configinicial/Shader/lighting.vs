@@ -34,6 +34,8 @@ void main()
     else if (proceduralTextureMode == 7)
         TexCoords = (abs(normal.y) > 0.5 ? position.xz :
                      vec2(abs(normal.x) > 0.5 ? position.z : position.x, position.y)) * 2.0 + vec2(0.5);
+    else if (proceduralTextureMode == 8)
+        TexCoords = vec2(normal.x, normal.y) * 0.5 + vec2(0.5);
     else
         TexCoords = texCoords;
 }
