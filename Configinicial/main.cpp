@@ -98,7 +98,8 @@ void drawBleachers(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::
     GLuint texConcrete, GLuint texSideWall, GLuint texWood, GLuint texWalkway, GLuint texMetal);
 void drawCrowd(GLint modelLoc, GLuint VAO, GLuint jerseyVAO, GLuint headVAO,
     const glm::mat4& scene, GLuint texPumas, GLuint texAtlante,
-    GLuint texHead, const GLuint crowdHeads[4], GLuint texPumasShorts, GLuint texAtlanteShorts);
+    GLuint texHead, const GLuint crowdHeads[4], GLuint texPumasShorts, GLuint texAtlanteShorts,
+    GLuint texHeadJoy = 0, GLuint texHeadAngry = 0, GLuint texHeadSad = 0, GLuint texHeadSurprise = 0);
 int crowdCelebratingSide();
 void drawDrone(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
@@ -627,9 +628,22 @@ int main()
     GLuint texSkin = CreateSolidColorTexture(205, 150, 105);
     GLuint texHead = LoadDiffuseTexture("Models/Textures/player_head_textures/atlas_emociones/atlas_neutral.png");
     if (!texHead) texHead = CreateSolidColorTexture(205, 150, 105);
-    glBindTexture(GL_TEXTURE_2D, texHead);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    GLuint texHeadJoy = LoadDiffuseTexture("Models/Textures/player_head_textures/atlas_emociones/atlas_alegria.png");
+    if (!texHeadJoy) texHeadJoy = texHead;
+    GLuint texHeadAngry = LoadDiffuseTexture("Models/Textures/player_head_textures/atlas_emociones/atlas_enojo.png");
+    if (!texHeadAngry) texHeadAngry = texHead;
+    GLuint texHeadSad = LoadDiffuseTexture("Models/Textures/player_head_textures/atlas_emociones/atlas_tristeza.png");
+    if (!texHeadSad) texHeadSad = texHead;
+    GLuint texHeadSurprise = LoadDiffuseTexture("Models/Textures/player_head_textures/atlas_emociones/atlas_sorpresa.png");
+    if (!texHeadSurprise) texHeadSurprise = texHead;
+
+    for (GLuint th : { texHead, texHeadJoy, texHeadAngry, texHeadSad, texHeadSurprise }) {
+        if (th) {
+            glBindTexture(GL_TEXTURE_2D, th);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        }
+    }
     glBindTexture(GL_TEXTURE_2D, 0);
     GLuint crowdHeads[4] = {};
     for (int i = 0; i < 4; ++i) {
@@ -887,17 +901,23 @@ int main()
 
         const bool penaltyPlayersVisible = matchScene == SCENE_PENALTIES;
         if (penaltyPlayersVisible) {
+            int celebratingSide = crowdCelebratingSide();
+            GLuint kickerHead = (celebratingSide != 0) ? texHeadJoy :
+                ((penaltyState == FINISHED && penaltyResult == "MISSED") ? texHeadAngry : texHead);
+            GLuint keeperHead = (celebratingSide != 0) ? texHeadSurprise :
+                ((penaltyState == FINISHED && penaltyResult == "MISSED") ? texHeadJoy : texHead);
+
             drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
                 glm::vec3(40.4f, 0.0f, 0.0f), 90.0f,
                 penaltyKickerTeam == 0 ? texPumas : texAtlante,
-                texHead,
+                kickerHead,
                 penaltyKickerTeam == 0 ? texShorts : texRed,
                 texSkin, texShoes, kickAngle, 0.0f, 0.0f, 10, texWhite);
 
             drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
                 glm::vec3(51.2f, 0.0f, keeperPositionZ), -90.0f,
                 texGoalkeeperJersey,
-                texHead,
+                keeperHead,
                 texShorts,
                 texSkin, texShoes, 0.0f, keeperDive, 0.0f, 1, texWhite);
         }
@@ -941,7 +961,7 @@ int main()
                             place = glm::vec3(0.0f, 0.0f, 38.0f);
                             drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp, place, 180.0f,
                                 team == 0 ? texAtlante : texPumas,
-                                texHead,
+                                texHeadJoy,
                                 team == 0 ? texRed : texShorts, texSkin, texShoes,
                                 8.0f, 0.0f, 0.0f, player + 1, texWhite);
                             continue;
@@ -954,10 +974,11 @@ int main()
                     else {
                         place = glm::vec3(-10.0f + player * 2.0f, 0.0f, 48.0f);
                     }
+                    GLuint finalHead = (team == champion) ? texHeadJoy : ((player % 2 == 0) ? texHeadSad : texHeadAngry);
                     drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
                         place, yaw,
                         team == 0 ? texAtlante : texPumas,
-                        texHead,
+                        finalHead,
                         team == 0 ? texRed : texShorts, texSkin, texShoes,
                         0.0f, 0.0f, walk, player + 1, texWhite);
                 }
@@ -1051,10 +1072,21 @@ int main()
                         }
                     }
 
+                    int celebratingSide = crowdCelebratingSide();
+                    int teamSide = (team == 0) ? 1 : -1;
+                    GLuint matchHead = texHead;
+                    if (celebratingSide != 0) {
+                        if (teamSide == celebratingSide) {
+                            matchHead = texHeadJoy;
+                        } else {
+                            matchHead = (player == 0) ? texHeadSurprise :
+                                ((player % 2 == 0) ? texHeadAngry : texHeadSad);
+                        }
+                    }
                     drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
                         place, yaw,
                         team == 0 ? texAtlante : texPumas,
-                        texHead,
+                        matchHead,
                         team == 0 ? texRed : texShorts, texSkin, texShoes,
                         kick, dive, step, player + 1, texWhite);
                 }
@@ -1077,7 +1109,8 @@ int main()
         drawBleachers(modelLoc, textureModeLoc, VAO, modelTemp, texGravelConcrete, texFacade,
             texWood, texWalkway, texFloodlight);
         drawCrowd(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
-            texPumas, texAtlante, texHead, crowdHeads, texShorts, texRed);
+            texPumas, texAtlante, texHead, crowdHeads, texShorts, texRed,
+            texHeadJoy, texHeadAngry, texHeadSad, texHeadSurprise);
         drawTrees(modelLoc, textureModeLoc, VAO, modelTemp, whiteMesh, blackMesh,
             texBark, texLeavesDark, texLeavesLight);
         drawTrophy(modelLoc, textureModeLoc, VAO, modelTemp, whiteMesh, blackMesh,
@@ -1184,6 +1217,7 @@ int main()
     glDeleteTextures(4, crowdHeads);
     GLuint textures[] = { texGrass, texWhite, texBlack, texBlue, texPumas, texRed, texAtlante, texRefereeJersey,
                          texGoalkeeperJersey, texBallWhite, texBallBlack,
+                         texHeadJoy, texHeadAngry, texHeadSad, texHeadSurprise,
                          texShorts, texSkin, texShoes, texPosts, texNet,
                          texSpecular, texBark, texLeavesDark,
                          texLeavesLight, texBird, texBeak, texGold, texMarble, texDarkWood, texFloodlight, texTowerMetal, texConcrete, texWalkway, texRunningTrack, texWood, texAsphalt, texFacade, texGravelConcrete };
@@ -2523,13 +2557,16 @@ void drawBleachers(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::
 
 void drawCrowd(GLint modelLoc, GLuint VAO, GLuint jerseyVAO, GLuint headVAO,
     const glm::mat4& scene, GLuint texPumas, GLuint texAtlante,
-    GLuint texHead, const GLuint crowdHeads[4], GLuint texPumasShorts, GLuint texAtlanteShorts)
+    GLuint texHead, const GLuint crowdHeads[4], GLuint texPumasShorts, GLuint texAtlanteShorts,
+    GLuint texHeadJoy, GLuint texHeadAngry, GLuint texHeadSad, GLuint texHeadSurprise)
 {
     float cheerTime = matchScene == SCENE_PUMAS_GOAL ? sceneTime - 5.2f :
         matchScene == SCENE_ATLANTE_GOAL ? sceneTime - 4.1f :
         matchScene == SCENE_PENALTIES ? penaltyRestTime : sceneTime;
+    int celebratingSide = crowdCelebratingSide();
     for (int side = -1; side <= 1; side += 2) {
         bool celebrating = side == crowdCelebratingSide();
+        bool isRivalConceding = (celebratingSide != 0 && side != celebratingSide);
         GLuint shirt = side < 0 ? texPumas : texAtlante;
         for (int row = 1; row <= 6; ++row) {
             float height = 0.72f * (row + 1);
@@ -2545,6 +2582,12 @@ void drawCrowd(GLint modelLoc, GLuint VAO, GLuint jerseyVAO, GLuint headVAO,
                     person = glm::rotate(person, glm::radians(side < 0 ? 0.0f : 180.0f),
                         glm::vec3(0, 1, 0));
                     GLuint face = crowdHeads[(section + 2 * row + seat) % 4];
+                    if (celebrating && texHeadJoy) {
+                        face = texHeadJoy;
+                    } else if (isRivalConceding) {
+                        face = ((section + row + seat) % 3 == 0) ? texHeadSurprise :
+                            (((section + seat) % 2 == 0) ? texHeadAngry : texHeadSad);
+                    }
                     drawCube(modelLoc, jerseyVAO, person, glm::vec3(0, 0.33f, 0),
                         glm::vec3(0.43f, 0.62f, 0.23f), shirt);
                     drawCube(modelLoc, headVAO, person, glm::vec3(0, 0.79f, 0),
