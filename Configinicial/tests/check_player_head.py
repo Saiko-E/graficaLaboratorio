@@ -23,7 +23,7 @@ with TemporaryDirectory() as folder:
 print("Head atlas and expressions: OK")
 
 scene = (textures.parents[1] / "main.cpp").read_text()
-assert scene.count("drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp") == 6
-assert scene.count("drawPlayer(") == 8  # Six calls plus declaration and definition; no legacy players.
+assert scene.count("drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp") == 7
+assert scene.count("drawPlayer(") == 9  # Seven calls plus declaration and definition; no legacy players.
 assert "const bool penaltyPlayersVisible = matchScene == SCENE_PENALTIES;" in scene
 print("Scene player calls: OK")

@@ -18,6 +18,7 @@ x86/
 Debug/
 Release/
 build/
+__pycache__/
 
 # Permitir modelos 3D de OpenGL
 !Configinicial/Models/
