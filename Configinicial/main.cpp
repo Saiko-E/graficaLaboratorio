@@ -27,6 +27,7 @@
 
 
 // Other includes
+
 #include "Shader.h"
 #include "Camera.h"
 #include "Model.h"
@@ -34,6 +35,7 @@
 
 
 // Function prototypes
+struct BallMesh;
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void MouseCallback(GLFWwindow* window, double xPos, double yPos);
 void DoMovement();
@@ -45,7 +47,8 @@ void resetMatch();
 void updateMatch(float step);
 void updateFade(float step);
 void drawMatchScoreboard(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
-    GLuint dark, GLuint white, GLuint gold, GLuint red);
+    const BallMesh& whiteMesh, const BallMesh& blackMesh,
+    GLuint dark, GLuint white, GLuint gold, GLuint red, GLuint green, GLuint pending);
 void drawScoreDigit(GLint modelLoc, GLuint VAO, const glm::mat4& matrix,
     int digit, float x, float y, float z, float width, GLuint texture);
 GLuint createFadeProgram();
@@ -66,7 +69,15 @@ void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, con
     glm::vec3 position, float yaw, GLuint texJersey, GLuint texHead,
     GLuint texShorts, GLuint texSkin, GLuint texShoes,
     float kickAngle = 0.0f, float diveAngle = 0.0f, float walkAngle = 0.0f,
-    int jerseyNumber = 0, GLuint numberColor = 0);
+    int jerseyNumber = 0, GLuint numberColor = 0,
+    float jumpHeight = 0.0f, float headNod = 0.0f);
+void drawGoalkeeperSave(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO,
+    const glm::mat4& scene, glm::vec3 position, float yaw,
+    GLuint jersey, GLuint face, GLuint shorts, GLuint skin, GLuint shoes,
+    GLuint glove, GLuint numberColor, int number, float progress, int direction);
+void drawCelebrationCaptain(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, const glm::mat4& scene,
+    glm::vec3 position, float yaw, GLuint texJersey, GLuint texHead,
+    GLuint texShorts, GLuint texSkin, GLuint texShoes, int jerseyNumber, GLuint numberColor);
 
 struct BallMesh {
     GLuint VAO = 0, VBO = 0;
@@ -128,17 +139,9 @@ bool firstMouse = true;
 glm::vec3 freeCameraPosition(32.0f, 2.0f, 0.0f);
 // Light attributes
 glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
-bool active;
 bool fireworksActive = false;
 float fireworksStartTime = 0.0f;
 
-// Positions of the point lights
-glm::vec3 pointLightPositions[] = {
-    glm::vec3(-40.0f, 17.5f, 49.0f),
-    glm::vec3(0.0f,0.0f, 0.0f),
-    glm::vec3(0.0f,0.0f,  0.0f),
-    glm::vec3(0.0f,0.0f, 0.0f)
-};
 
 float vertices[] = {
      -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -186,13 +189,13 @@ float vertices[] = {
 
 
 
-glm::vec3 Light1 = glm::vec3(0);
 enum PenaltyState { READY, PREPARING, KICKING, FLYING, FINISHED };
 PenaltyState penaltyState = READY;
 float stateTime = 0.0f;
 float rotBall = 0.0f;
 float kickAngle = 0.0f;
 float keeperDive = 0.0f;
+float keeperDiveProgress = 0.0f;
 float keeperPositionZ = 0.0f;
 float targetZ = 0.0f;
 float targetY = 0.9f;
@@ -207,26 +210,32 @@ glm::vec3 ballPosition(41.5f, 0.11f, 0.0f);
 std::string penaltyResult = "READY";
 int activeCamera = 9;
 glm::vec3 broadcastCameraPositions[8] = {
-    glm::vec3(20.0f, 22.0f, -14.0f),
+    glm::vec3(-20.0f, 22.0f, -14.0f),
     glm::vec3(20.0f, 22.0f, 14.0f),
-    glm::vec3(30.0f, 0.0f, -40.0f),
-    glm::vec3(59.0f, 0.0f, 0.0f),
-    glm::vec3(30.0f, 0.0f, 40.0f),
-    glm::vec3(49.0f, 0.0f, -40.0f),
-    glm::vec3(24.0f, 4.32f, 62.0f),
-    glm::vec3(-24.0f, 4.32f, -62.0f)
+    glm::vec3(-24.0f, 0.0f, -42.5f),
+    glm::vec3(24.0f, 0.0f, 42.5f),
+    glm::vec3(-18.0f, 4.32f, -62.0f),
+    glm::vec3(18.0f, 4.32f, 62.0f),
+    glm::vec3(-60.5f, 0.0f, 7.2f),
+    glm::vec3(60.5f, 0.0f, -7.2f)
 };
-const glm::vec3 facadeCameraPosition(24.0f, 10.0f, -95.0f);
 glm::vec3 trackedBallPosition(0.0f, 0.11f, 0.0f);
 glm::vec3 cameraHeadPivot(0.0f, 8.837823f, 0.0f);
 const float cameraModelScale = 0.20f;
 float cameraModelForwardYawDegrees = 0.0f;
 const std::string cameraAssetDirectory = "Models/Camaras/";
 const glm::vec3 floodlightPositions[4] = {
-    glm::vec3(-40.0f, 0.0f, -49.0f),
-    glm::vec3(-40.0f, 0.0f, 49.0f),
-    glm::vec3(40.0f, 0.0f, -49.0f),
-    glm::vec3(40.0f, 0.0f, 49.0f)
+    glm::vec3(-64.0f, 0.0f, -68.0f),
+    glm::vec3(-64.0f, 0.0f, 68.0f),
+    glm::vec3(64.0f, 0.0f, -68.0f),
+    glm::vec3(64.0f, 0.0f, 68.0f)
+};
+const float floodlightHeight = 25.8f;
+const glm::vec3 floodlightTargets[4] = {
+    glm::vec3(-38.0f, 0.0f, -6.0f),
+    glm::vec3(-38.0f, 0.0f, 6.0f),
+    glm::vec3(38.0f, 0.0f, -6.0f),
+    glm::vec3(38.0f, 0.0f, 6.0f)
 };
 
 enum BusState { BUS_WAITING, BUS_STRAIGHT, BUS_TURNING, BUS_COMPLETED };
@@ -310,13 +319,22 @@ int matchMinute = 0;
 int matchSecond = 0;
 int penaltyTaken[2] = { 0, 0 };
 int penaltyGoals[2] = { 0, 0 };
+const int penaltyHistoryLimit = 64;
+int penaltyHistory[2][penaltyHistoryLimit] = {};
+
 int penaltyKickerTeam = 0;
 int penaltyWinner = -1;
 int penaltyNextKickerTeam = -1;
 bool penaltyShotRecorded = false;
 float penaltyRestTime = 0.0f;
 const float transitionDuration = 1.15f;
-const glm::vec3 trophyFocusPosition(0.0f, 2.65f, 38.0f);
+const glm::vec3 trophyFocusPosition(0.0f, 2.10f, 37.62f);
+float trophyLiftHeight()
+{
+    float t = glm::clamp((sceneTime - 1.15f) / 2.75f, 0.0f, 1.0f);
+    return 1.72f * t * t * (3.0f - 2.0f * t);
+}
+
 
 const char* getSceneLabel()
 {
@@ -333,7 +351,7 @@ const char* getSceneLabel()
 
 int crowdCelebratingSide()
 {
-    if (matchScene == SCENE_PUMAS_GOAL && sceneTime >= 5.2f) return -1;
+    if (matchScene == SCENE_PUMAS_GOAL && sceneTime >= 5.35f) return -1;
     if (matchScene == SCENE_ATLANTE_GOAL && sceneTime >= 4.1f) return 1;
     if (matchScene == SCENE_PENALTIES && penaltyState == FINISHED && penaltyResult == "GOAL")
         return penaltyKickerTeam == 0 ? -1 : 1;
@@ -370,12 +388,114 @@ void startArrival()
         teamLineupTime[team] = 0.0f;
     }
     arrivalStarted = true;
-    activeCamera = 9;
     ResetPenalty();
     goals = 0;
     saves = 0;
     misses = 0;
     std::cout << "Team arrival started." << std::endl;
+}
+
+float smoothMatchStep(float t)
+{
+    t = glm::clamp(t, 0.0f, 1.0f);
+    return t * t * (3.0f - 2.0f * t);
+}
+
+float headerJump(float time, float contact, float halfWindow, float height)
+{
+    float distance = std::fabs(time - contact);
+    if (distance >= halfWindow) return 0.0f;
+    return height * 0.5f * (1.0f + std::cos(busPi * distance / halfWindow));
+}
+
+glm::vec3 getMatchPlayerPosition(int team, int player, float time)
+{
+    float side = team == 0 ? 1.0f : -1.0f;
+    const float lineZ[11] = { 0.0f, -22.0f, -8.0f, 8.0f, 22.0f,
+        -18.0f, 0.0f, 18.0f, -16.0f, 0.0f, 16.0f };
+    float x = player == 0 ? 50.0f : player < 5 ? 34.0f : player < 8 ? 20.0f : 8.0f;
+    glm::vec3 place(side * x, 0.0f, lineZ[player]);
+
+    if (matchScene == SCENE_KICKOFF) {
+        if (team == 1 && player == 9) {
+            float a = smoothMatchStep((time - 1.0f) / 2.5f);
+            return glm::mix(glm::vec3(-1.0f, 0.0f, -0.5f), glm::vec3(-4.0f, 0.0f, 1.5f), a);
+        }
+        if (team == 1 && player == 10) {
+            if (time < 2.3f) {
+                float a = smoothMatchStep((time - 0.7f) / 1.6f);
+                return glm::mix(glm::vec3(-6.0f, 0.0f, 7.5f), glm::vec3(-7.0f, 0.0f, 6.0f), a);
+            }
+            float a = smoothMatchStep((time - 2.3f) / 2.3f);
+            return glm::mix(glm::vec3(-7.0f, 0.0f, 6.0f), glm::vec3(-18.0f, 0.0f, 12.0f), a);
+        }
+        if (player > 0) {
+            float a = smoothMatchStep((time - 1.2f) / 3.4f);
+            place.x += (team == 1 ? -1.0f : -1.0f) * a * (2.0f + player % 3);
+            place.z += std::sin(static_cast<float>(player) * 2.1f) * a * 1.5f;
+        }
+    }
+    else if (matchScene == SCENE_PUMAS_GOAL) {
+        static const glm::vec3 atlante[11] = {
+            {51.0f,0.0f,0.0f}, {45.0f,0.0f,-11.0f}, {46.0f,0.0f,-5.8f},
+            {46.0f,0.0f,3.5f}, {45.0f,0.0f,10.0f}, {41.0f,0.0f,-17.0f},
+            {40.0f,0.0f,16.0f}, {40.0f,0.0f,-1.0f}, {39.0f,0.0f,11.0f},
+            {42.0f,0.0f,5.7f}, {40.0f,0.0f,-9.0f}
+        };
+        static const glm::vec3 pumas[11] = {
+            {-50.0f,0.0f,0.0f}, {9.0f,0.0f,-24.0f}, {17.0f,0.0f,-16.0f},
+            {29.0f,0.0f,18.0f}, {27.0f,0.0f,-23.0f}, {35.0f,0.0f,-20.0f},
+            {50.8f,0.0f,-33.6f}, {36.0f,0.0f,13.0f}, {32.0f,0.0f,-11.0f},
+            {39.0f,0.0f,6.5f}, {40.0f,0.0f,11.0f}
+        };
+        place = team == 0 ? atlante[player] : pumas[player];
+        if (team == 1 && player == 8) {
+            float a = smoothMatchStep((time - 0.25f) / 2.45f);
+            return glm::mix(place, glm::vec3(43.0f, 0.0f, -5.0f), a);
+        }
+        if (team == 1 && player == 9) {
+            float a = smoothMatchStep((time - 2.05f) / 2.25f);
+            return glm::mix(place, glm::vec3(46.5f, 0.0f, -0.6f), a);
+        }
+        if (player > 0 && !(team == 1 && player == 6)) {
+            float a = smoothMatchStep((time - 0.6f - 0.14f * (player % 5)) / 3.0f);
+            place.x += (team == 0 ? -0.6f : 1.25f) * a;
+            place.z += std::sin(1.7f * player + 0.6f * team) * 1.4f * a;
+        }
+    }
+    else if (matchScene == SCENE_ATLANTE_GOAL) {
+        static const glm::vec3 atlante[11] = {
+            {49.0f,0.0f,0.0f}, {12.0f,0.0f,-23.0f}, {8.0f,0.0f,-11.0f},
+            {4.0f,0.0f,13.0f}, {-5.0f,0.0f,24.0f}, {-16.0f,0.0f,-18.0f},
+            {-23.0f,0.0f,13.0f}, {-21.0f,0.0f,22.0f}, {-18.0f,0.0f,-7.0f},
+            {-25.0f,0.0f,-2.1f}, {-22.0f,0.0f,9.0f}
+        };
+        static const glm::vec3 pumas[11] = {
+            {-50.6f,0.0f,0.0f}, {-39.0f,0.0f,-4.5f}, {-39.0f,0.0f,-1.5f},
+            {-39.0f,0.0f,1.5f}, {-39.0f,0.0f,4.5f}, {-45.0f,0.0f,-12.0f},
+            {-44.0f,0.0f,12.0f}, {-34.0f,0.0f,17.0f}, {-37.0f,0.0f,-17.0f},
+            {-42.0f,0.0f,22.0f}, {-45.0f,0.0f,-24.0f}
+        };
+        place = team == 0 ? atlante[player] : pumas[player];
+        if (team == 0 && player == 9) {
+            float a = smoothMatchStep((time - 0.35f) / 0.95f);
+            return glm::mix(place, glm::vec3(-28.0f, 0.0f, 0.0f), a);
+        }
+        if (team == 1 && player >= 1 && player <= 4) return place;
+        if (player > 0) {
+            float a = smoothMatchStep((time - 1.1f) / 2.5f);
+            place.x += (team == 0 ? -2.8f : -0.65f) * a;
+            place.z += std::sin(player * 1.25f) * 1.0f * a;
+        }
+    }
+    return place;
+}
+
+float yawTowardBall(glm::vec3 player, glm::vec3 ball, float fallback)
+{
+    glm::vec2 d(ball.x - player.x, ball.z - player.z);
+    if (glm::dot(d, d) < 0.12f) return fallback;
+    return glm::degrees(std::atan2(d.x, d.y));
 }
 
 // Deltatime
@@ -614,6 +734,8 @@ int main()
     GLuint texPumas = LoadDiffuseTexture("Models/Textures/pumas_navy_jersey.png");
     if (!texPumas) texPumas = CreateSolidColorTexture(14, 30, 61);
     GLuint texRed = CreateSolidColorTexture(205, 45, 45);
+    GLuint texPenaltyGreen = CreateSolidColorTexture(45, 210, 75);
+
     GLuint texAtlante = LoadDiffuseTexture("Models/Textures/atlante_white_jersey.png");
     if (!texAtlante) texAtlante = CreateSolidColorTexture(245, 245, 245);
     GLuint texRefereeJersey = LoadDiffuseTexture("Models/Textures/referee_yellow_jersey.png");
@@ -797,26 +919,16 @@ int main()
         glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.specular"), 0.3f, 0.3f, 0.3f);
 
 
-        // Each tower illuminates the pitch; the first movable light stays at its original position.
-        glm::vec3 lightColor;
-        lightColor.x = abs(sin(glfwGetTime() * Light1.x));
-        lightColor.y = abs(sin(glfwGetTime() * Light1.y));
-        lightColor.z = sin(glfwGetTime() * Light1.z);
         for (int i = 0; i < 4; ++i) {
-            glm::vec3 p = i == 1 ? pointLightPositions[0] : floodlightPositions[i] + glm::vec3(0.0f, 17.5f, 0.0f);
+            glm::vec3 p = floodlightPositions[i] + glm::vec3(0.0f, floodlightHeight, 0.0f);
             std::string name = "pointLights[" + std::to_string(i) + "].";
             glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "position").c_str()), p.x, p.y, p.z);
-            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "ambient").c_str()),
-                0.06f * stadiumLightIntensity, 0.06f * stadiumLightIntensity, 0.05f * stadiumLightIntensity);
-            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "diffuse").c_str()),
-                (0.55f + 0.1f * lightColor.x) * stadiumLightIntensity,
-                (0.50f + 0.1f * lightColor.y) * stadiumLightIntensity,
-                (0.43f + 0.1f * lightColor.z) * stadiumLightIntensity);
-            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "specular").c_str()),
-                0.25f * stadiumLightIntensity, 0.25f * stadiumLightIntensity, 0.22f * stadiumLightIntensity);
+            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "ambient").c_str()), 0.0f, 0.0f, 0.0f);
+            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "diffuse").c_str()), 0.0f, 0.0f, 0.0f);
+            glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "specular").c_str()), 0.0f, 0.0f, 0.0f);
             glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "constant").c_str()), 1.0f);
-            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "linear").c_str()), 0.006f);
-            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "quadratic").c_str()), 0.0005f);
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "linear").c_str()), 0.09f);
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "quadratic").c_str()), 0.032f);
         }
 
         for (int team = 0; team < 2; ++team) {
@@ -836,23 +948,23 @@ int main()
         }
 
         for (int i = 0; i < 4; ++i) {
-            glm::vec3 p = floodlightPositions[i] + glm::vec3(0.0f, 17.5f, 0.0f);
-            glm::vec3 direction = glm::normalize(-p);
+            glm::vec3 p = floodlightPositions[i] + glm::vec3(0.0f, floodlightHeight, 0.0f);
+            glm::vec3 direction = glm::normalize(floodlightTargets[i] - p);
             std::string name = "spotLights[" + std::to_string(i) + "].";
             glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "position").c_str()), p.x, p.y, p.z);
             glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "direction").c_str()),
                 direction.x, direction.y, direction.z);
             glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "ambient").c_str()),
-                0.03f * stadiumLightIntensity, 0.03f * stadiumLightIntensity, 0.03f * stadiumLightIntensity);
+                0.01f * stadiumLightIntensity, 0.01f * stadiumLightIntensity, 0.01f * stadiumLightIntensity);
             glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "diffuse").c_str()),
-                0.9f * stadiumLightIntensity, 0.84f * stadiumLightIntensity, 0.72f * stadiumLightIntensity);
+                1.72f * stadiumLightIntensity, 1.60f * stadiumLightIntensity, 1.40f * stadiumLightIntensity);
             glUniform3f(glGetUniformLocation(lightingShader.Program, (name + "specular").c_str()),
                 0.25f * stadiumLightIntensity, 0.25f * stadiumLightIntensity, 0.22f * stadiumLightIntensity);
             glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "constant").c_str()), 1.0f);
-            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "linear").c_str()), 0.006f);
-            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "quadratic").c_str()), 0.0005f);
-            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "cutOff").c_str()), glm::cos(glm::radians(42.0f)));
-            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "outerCutOff").c_str()), glm::cos(glm::radians(50.0f)));
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "linear").c_str()), 0.0035f);
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "quadratic").c_str()), 0.00016f);
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "cutOff").c_str()), glm::cos(glm::radians(31.0f)));
+            glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "outerCutOff").c_str()), glm::cos(glm::radians(47.0f)));
         }
 
         // Set material properties
@@ -924,12 +1036,11 @@ int main()
                 penaltyKickerTeam == 0 ? texShorts : texRed,
                 texSkin, texShoes, kickAngle, 0.0f, 0.0f, 10, texWhite);
 
-            drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
+            drawGoalkeeperSave(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
                 glm::vec3(51.2f, 0.0f, keeperPositionZ), -90.0f,
-                texGoalkeeperJersey,
-                keeperHead,
-                texShorts,
-                texSkin, texShoes, 0.0f, keeperDive, 0.0f, 1, texWhite);
+                texGoalkeeperJersey, keeperHead, texShorts, texSkin, texShoes,
+                texWhite, texWhite, 1,
+                keeperDiveProgress, keeperSide);
         }
 
         if (arrivalStarted && (matchScene == SCENE_ARRIVAL || matchScene == SCENE_IDLE)) {
@@ -969,11 +1080,10 @@ int main()
                     if (team == champion) {
                         if (player == 5) {
                             place = glm::vec3(0.0f, 0.0f, 38.0f);
-                            drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp, place, 180.0f,
-                                team == 0 ? texAtlante : texPumas,
-                                texHeadJoy,
+                            drawCelebrationCaptain(modelLoc, VAO, jerseyVAO, headVAO, modelTemp, place, 180.0f,
+                                team == 0 ? texAtlante : texPumas, texHeadJoy,
                                 team == 0 ? texRed : texShorts, texSkin, texShoes,
-                                8.0f, 0.0f, 0.0f, player + 1, texWhite);
+                                player + 1, texWhite);
                             continue;
                         }
                         int idx = player < 5 ? player : player - 1;
@@ -997,100 +1107,68 @@ int main()
 
         if (matchScene == SCENE_KICKOFF || matchScene == SCENE_PUMAS_GOAL || matchScene == SCENE_ATLANTE_GOAL) {
             for (int team = 0; team < 2; ++team) {
-                float side = team == 0 ? 1.0f : -1.0f;
                 for (int player = 0; player < playersPerTeam; ++player) {
-                    float rowX = player == 0 ? 47.0f :
-                        (player < 5 ? 31.0f : (player < 9 ? 16.0f : 5.0f));
-                    float across = player == 0 ? 0.0f :
-                        (player < 5 ? (player - 2.5f) * 10.0f :
-                            (player < 9 ? (player - 6.5f) * 11.0f : (player - 9.5f) * 12.0f));
-                    glm::vec3 place(side * rowX, 0.0f, across);
-                    float step = 1.8f * sinf(sceneTime * 2.0f + player);
+                    glm::vec3 place = getMatchPlayerPosition(team, player, sceneTime);
+                    float walk = 0.0f;
                     float kick = 0.0f;
                     float dive = 0.0f;
-                    float yaw = team == 0 ? -90.0f : 90.0f;
+                    float jump = 0.0f;
+                    float nod = 0.0f;
+                    float yaw = yawTowardBall(place, ballPosition, team == 1 ? 90.0f : -90.0f);
+                    glm::vec3 futurePlace = getMatchPlayerPosition(team, player, sceneTime + 0.08f);
+                    bool running = glm::distance(futurePlace, place) > 0.018f;
+                    if (running)
+                        walk = 23.0f * sinf(sceneTime * 10.0f + player * 0.8f);
 
-                    if (matchScene == SCENE_KICKOFF) {
+                    if (matchScene == SCENE_KICKOFF && team == 1 && player == 9) {
+                        if (sceneTime >= 0.60f && sceneTime <= 1.35f)
+                            kick = 42.0f * sinf((sceneTime - 0.60f) / 0.75f * busPi);
+                    }
+                    if (matchScene == SCENE_PUMAS_GOAL) {
+                        if (team == 1 && player == 6) {
+                            if (sceneTime >= 0.20f && sceneTime < 0.85f)
+                                kick = 44.0f * sinf((sceneTime - 0.20f) / 0.65f * busPi);
+                            yaw = yawTowardBall(place, glm::vec3(43.0f, 0.0f, -5.0f), 0.0f);
+                        }
+                        if (team == 1 && player == 8) {
+                            jump = headerJump(sceneTime, 2.7f, 0.42f, 0.36f);
+                            nod = 35.0f * jump / 0.36f;
+                            yaw = yawTowardBall(place, glm::vec3(46.5f, 0.0f, -0.6f), 80.0f);
+                        }
                         if (team == 1 && player == 9) {
-                            place = glm::vec3(0.0f, 0.0f, 0.0f);
-                            kick = sceneTime < 1.0f ? 42.0f * sinf(sceneTime * 3.14159f) : 0.0f;
-                            step = 0.0f;
-                        }
-                        if (team == 1 && player == 10) {
-                            float t = glm::clamp((sceneTime - 1.0f) / 2.3f, 0.0f, 1.0f);
-                            glm::vec3 start(-2.0f, 0.0f, 7.0f), end(-16.0f, 0.0f, 14.0f);
-                            place = glm::mix(start, end, t);
-                            step = t < 1.0f ? 22.0f * sinf(sceneTime * 9.0f) : 0.0f;
-                            yaw = -120.0f;
+                            jump = headerJump(sceneTime, pumasShotTime, 0.46f, 0.42f);
+                            nod = 40.0f * jump / 0.42f;
+                            yaw = yawTowardBall(place, glm::vec3(53.4f, 0.0f, 0.65f), 90.0f);
                         }
                     }
-                    else if (matchScene == SCENE_PUMAS_GOAL) {
-                        if (team == 1) {
-                            if (player == 6) {
-                                place = glm::vec3(50.9f, 0.0f, -33.5f);
-                                kick = sceneTime < 2.0f * pumasCornerKickTime ?
-                                    30.0f * sinf(sceneTime / (2.0f * pumasCornerKickTime) * busPi) : 0.0f;
-                                yaw = -16.0f;
-                                step = 0.0f;
-                            }
-                            if (player == 8) {
-                                float t = glm::clamp(sceneTime / 2.5f, 0.0f, 1.0f);
-                                place = glm::mix(glm::vec3(32.0f, 0.0f, -10.0f), glm::vec3(43.0f, 0.0f, -5.0f), t);
-                                step = t < 1.0f ? 24.0f * sinf(sceneTime * 8.5f) : 0.0f;
-                                if (sceneTime > 2.2f && sceneTime < 2.9f) kick = -15.0f;
-                                yaw = 105.0f;
-                            }
-                            if (player == 9) {
-                                float t = glm::clamp((sceneTime - 2.5f) / 1.5f, 0.0f, 1.0f);
-                                place = glm::mix(glm::vec3(39.0f, 0.0f, 6.0f), glm::vec3(46.0f, 0.0f, 0.0f), t);
-                                step = t < 1.0f ? 20.0f * sinf(sceneTime * 9.5f) : 0.0f;
-                                if (sceneTime > pumasShotTime - 0.3f && sceneTime < pumasShotTime + 0.3f)
-                                    kick = 36.0f * sinf((sceneTime - (pumasShotTime - 0.3f)) / 0.6f * busPi);
-                                yaw = 90.0f;
-                            }
-                        }
-                        if (team == 0 && player < 4) {
-                            float t = glm::clamp(sceneTime / 3.2f, 0.0f, 1.0f);
-                            place = glm::mix(place, glm::vec3(47.0f - player * 1.5f, 0.0f, -8.0f + player * 6.0f), t);
-                            step = t < 1.0f ? 14.0f * sinf(sceneTime * 7.5f + player) : 0.0f;
-                            yaw = -90.0f;
-                        }
-                    }
-                    else if (matchScene == SCENE_ATLANTE_GOAL) {
-                        if (team == 0) {
-                            if (player == 9) {
-                                place = glm::vec3(-28.0f, 0.0f, 0.0f);
-                                kick = sceneTime > 0.7f && sceneTime < 1.5f ? 40.0f * sinf((sceneTime - 0.7f) / 0.8f * 3.14159f) : 0.0f;
-                                yaw = -90.0f;
-                            }
-                            if (player == 8) {
-                                float t = glm::clamp(sceneTime / 2.0f, 0.0f, 1.0f);
-                                place = glm::mix(glm::vec3(-18.0f, 0.0f, -6.0f), glm::vec3(-23.0f, 0.0f, -10.0f), t);
-                                step = 18.0f * sinf(sceneTime * 8.0f);
-                            }
-                        }
-                        if (team == 1 && player < 3) {
-                            place = glm::vec3(-40.0f, 0.0f, -4.0f + player * 4.0f);
-                            if (sceneTime > 1.0f && sceneTime < 1.9f) kick = 8.0f * sinf((sceneTime - 1.0f) / 0.9f * 3.14159f);
-                            yaw = 90.0f;
-                        }
-                        if (team == 1 && player == 0) {
-                            float t = glm::clamp((sceneTime - 1.6f) / 1.2f, 0.0f, 1.0f);
-                            place = glm::mix(glm::vec3(-50.0f, 0.0f, 0.0f), glm::vec3(-52.0f, 0.0f, -4.0f), t);
-                            dive = -55.0f * t;
-                            yaw = 90.0f;
+                    if (matchScene == SCENE_ATLANTE_GOAL) {
+                        if (team == 0 && player == 9 && sceneTime >= 0.92f && sceneTime <= 1.68f)
+                            kick = 42.0f * sinf((sceneTime - 0.92f) / 0.76f * busPi);
+                        if (team == 1 && player >= 1 && player <= 4) {
+                            jump = headerJump(sceneTime, 1.55f, 0.35f, 0.22f);
                         }
                     }
 
                     int celebratingSide = crowdCelebratingSide();
-                    int teamSide = (team == 0) ? 1 : -1;
+                    int teamSide = team == 0 ? 1 : -1;
                     GLuint matchHead = texHead;
                     if (celebratingSide != 0) {
-                        if (teamSide == celebratingSide) {
-                            matchHead = texHeadJoy;
-                        } else {
-                            matchHead = (player == 0) ? texHeadSurprise :
-                                ((player % 2 == 0) ? texHeadAngry : texHeadSad);
+                        matchHead = (teamSide == celebratingSide) ? texHeadJoy :
+                            ((player % 2 == 0) ? texHeadSad : texHeadSurprise);
+                    }
+                    if (player == 0 && (matchScene == SCENE_PUMAS_GOAL || matchScene == SCENE_ATLANTE_GOAL)) {
+                        bool homeGoalkeeper = matchScene == SCENE_PUMAS_GOAL && team == 0;
+                        bool awayGoalkeeper = matchScene == SCENE_ATLANTE_GOAL && team == 1;
+                        if (homeGoalkeeper || awayGoalkeeper) {
+                            float goalkeeperYaw = team == 0 ? -90.0f : 90.0f;
+                            float progress = homeGoalkeeper ?
+                                smoothMatchStep((sceneTime - 4.35f) / 0.58f) :
+                                smoothMatchStep((sceneTime - 2.10f) / 0.80f);
+                            drawGoalkeeperSave(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
+                                place, goalkeeperYaw, texGoalkeeperJersey, matchHead,
+                                texShorts, texSkin, texShoes, texWhite, texWhite,
+                                1, progress, 1);
+                            continue;
                         }
                     }
                     drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
@@ -1098,7 +1176,7 @@ int main()
                         team == 0 ? texAtlante : texPumas,
                         matchHead,
                         team == 0 ? texRed : texShorts, texSkin, texShoes,
-                        kick, dive, step, player + 1, texWhite);
+                        kick, dive, walk, player + 1, texWhite, jump, nod);
                 }
             }
         }
@@ -1111,7 +1189,7 @@ int main()
                 matchScene == SCENE_PENALTIES ? glm::vec3(33.0f, 0.0f, 16.0f) :
                 glm::vec3(-2.0f, 0.0f, 30.0f);
             drawPlayer(modelLoc, VAO, jerseyVAO, headVAO, modelTemp,
-                refereePosition, 180.0f, texRefereeJersey, texHead, texBlack, texSkin, texShoes);
+                refereePosition, 180.0f, texWhite, texHead, texBlack, texSkin, texShoes);
         }
         if (ballVisible)
             drawBall(modelLoc, textureModeLoc, modelTemp, whiteMesh, blackMesh,
@@ -1181,7 +1259,8 @@ int main()
 
         glUniform1i(textureModeLoc, 0);
         glUniform1i(importedTextureLoc, 0);
-        drawMatchScoreboard(modelLoc, VAO, modelTemp, texBlack, texWhite, texGold, texRed);
+        drawMatchScoreboard(modelLoc, VAO, modelTemp, whiteMesh, blackMesh,
+            texBlack, texWhite, texGold, texRed, texPenaltyGreen, texFloodlight);
 
         lampShader.Use();
         GLint lampModelLoc = glGetUniformLocation(lampShader.Program, "model");
@@ -1225,7 +1304,7 @@ int main()
     glDeleteProgram(fadeProgram);
     glDeleteProgram(skyShader.Program);
     glDeleteTextures(4, crowdHeads);
-    GLuint textures[] = { texGrass, texWhite, texBlack, texBlue, texPumas, texRed, texAtlante, texRefereeJersey,
+    GLuint textures[] = { texGrass, texWhite, texBlack, texBlue, texPumas, texRed, texPenaltyGreen, texAtlante, texRefereeJersey,
                          texGoalkeeperJersey, texBallWhite, texBallBlack,
                          texHeadJoy, texHeadAngry, texHeadSad, texHeadSurprise,
                          texDroneBody, texDroneArm, texDroneRotor, texDroneLens,
@@ -1284,32 +1363,8 @@ void DoMovement()
     freeCameraPosition.y = glm::clamp(freeCameraPosition.y, 1.0f, 32.0f);
     freeCameraPosition.z = glm::clamp(freeCameraPosition.z, -75.0f, 75.0f);
 
-    if (keys[GLFW_KEY_T])
-    {
-        pointLightPositions[0].x += 0.01f;
-    }
-    if (keys[GLFW_KEY_G])
-    {
-        pointLightPositions[0].x -= 0.01f;
-    }
 
-    if (keys[GLFW_KEY_Y])
-    {
-        pointLightPositions[0].y += 0.01f;
-    }
 
-    if (keys[GLFW_KEY_H])
-    {
-        pointLightPositions[0].y -= 0.01f;
-    }
-    if (keys[GLFW_KEY_U])
-    {
-        pointLightPositions[0].z -= 0.1f;
-    }
-    if (keys[GLFW_KEY_J])
-    {
-        pointLightPositions[0].z += 0.01f;
-    }
 
 }
 
@@ -1408,6 +1463,9 @@ void resetMatch()
     matchMinute = matchSecond = 0;
     penaltyTaken[0] = penaltyTaken[1] = 0;
     penaltyGoals[0] = penaltyGoals[1] = 0;
+    for (int team = 0; team < 2; ++team)
+        for (int attempt = 0; attempt < penaltyHistoryLimit; ++attempt)
+            penaltyHistory[team][attempt] = -1;
     penaltyKickerTeam = 0;
     penaltyWinner = -1;
     penaltyNextKickerTeam = -1;
@@ -1428,7 +1486,6 @@ void resetMatch()
     }
     ResetPenalty();
     goals = saves = misses = 0;
-    activeCamera = 9;
 }
 
 void beginMatchScene(int next, bool automatic)
@@ -1442,12 +1499,10 @@ void beginMatchScene(int next, bool automatic)
         startArrival();
     }
     if (matchScene == SCENE_KICKOFF) {
-        activeCamera = 9;
         ballPosition = glm::vec3(0.0f, 0.11f, 0.0f);
         matchMinute = matchSecond = 0;
     }
     if (matchScene == SCENE_PUMAS_GOAL) {
-        activeCamera = 9;
         pumasScore = 0;
         atlanteScore = 0;
         matchMinute = 43;
@@ -1455,7 +1510,6 @@ void beginMatchScene(int next, bool automatic)
         ballPosition = glm::vec3(50.8f, 0.11f, -33.0f);
     }
     if (matchScene == SCENE_ATLANTE_GOAL) {
-        activeCamera = 9;
         pumasScore = 1;
         atlanteScore = 0;
         matchMinute = 87;
@@ -1463,13 +1517,15 @@ void beginMatchScene(int next, bool automatic)
         ballPosition = glm::vec3(-28.0f, 0.11f, 0.0f);
     }
     if (matchScene == SCENE_PENALTIES) {
-        activeCamera = 4;
         pumasScore = 1;
         atlanteScore = 1;
         matchMinute = 90;
         matchSecond = 0;
         penaltyTaken[0] = penaltyTaken[1] = 0;
         penaltyGoals[0] = penaltyGoals[1] = 0;
+        for (int team = 0; team < 2; ++team)
+            for (int attempt = 0; attempt < penaltyHistoryLimit; ++attempt)
+                penaltyHistory[team][attempt] = -1;
         penaltyKickerTeam = 0;
         penaltyWinner = -1;
         penaltyNextKickerTeam = -1;
@@ -1479,7 +1535,6 @@ void beginMatchScene(int next, bool automatic)
         goals = saves = misses = 0;
     }
     if (matchScene == SCENE_FINAL) {
-        activeCamera = 8;
         matchMinute = 90;
         matchSecond = 0;
         fireworksActive = true;
@@ -1541,25 +1596,28 @@ void updateMatch(float step)
     }
     if (matchScene == SCENE_PUMAS_GOAL) {
         float t = sceneTime;
-        glm::vec3 start(50.8f, 0.11f, -33.0f);
-        glm::vec3 header(43.0f, 2.0f, -5.0f);
-        glm::vec3 scorer(46.5f, 0.35f, 0.0f);
-        glm::vec3 net(53.0f, 1.6f, 0.0f);
-        if (t < 2.5f) {
-            float a = glm::clamp((t - pumasCornerKickTime) / (2.5f - pumasCornerKickTime), 0.0f, 1.0f);
-            ballPosition = glm::mix(start, header, a) + glm::vec3(0, 3.2f * sinf(busPi * a), 0);
+        const glm::vec3 start(50.8f, 0.11f, -33.0f);
+        const glm::vec3 firstHeader(43.0f, 2.05f, -5.0f);
+        const glm::vec3 winningHeader(46.5f, 2.13f, -0.6f);
+        const glm::vec3 net(53.4f, 1.35f, 0.65f);
+        if (t < pumasCornerKickTime) {
+            ballPosition = start;
         }
-        else if (t < 4.0f) {
-            float a = glm::clamp((t - 2.5f) / 1.5f, 0.0f, 1.0f);
-            ballPosition = glm::mix(header, scorer, a) + glm::vec3(0, 0.5f * sinf(busPi * a), 0);
+        else if (t < 2.7f) {
+            float a = glm::clamp((t - pumasCornerKickTime) / (2.7f - pumasCornerKickTime), 0.0f, 1.0f);
+            ballPosition = glm::mix(start, firstHeader, a) + glm::vec3(0.0f, 2.0f * sinf(busPi * a), 0.0f);
+        }
+        else if (t < pumasShotTime) {
+            float a = glm::clamp((t - 2.7f) / (pumasShotTime - 2.7f), 0.0f, 1.0f);
+            ballPosition = glm::mix(firstHeader, winningHeader, a) + glm::vec3(0.0f, 0.65f * sinf(busPi * a), 0.0f);
         }
         else {
-            float a = glm::clamp((t - pumasShotTime) / (5.2f - pumasShotTime), 0.0f, 1.0f);
-            ballPosition = glm::mix(scorer, net, a);
+            float a = glm::clamp((t - pumasShotTime) / (5.35f - pumasShotTime), 0.0f, 1.0f);
+            ballPosition = glm::mix(winningHeader, net, a);
         }
         matchSecond = std::min(59, static_cast<int>(t));
-        if (t >= 5.2f) pumasScore = 1;
-        if (autoSequence && t >= 7.0f) requestMatchScene(SCENE_ATLANTE_GOAL);
+        if (t >= 5.35f) pumasScore = 1;
+        if (autoSequence && t >= 8.3f) requestMatchScene(SCENE_ATLANTE_GOAL);
         return;
     }
     if (matchScene == SCENE_ATLANTE_GOAL) {
@@ -1573,7 +1631,12 @@ void updateMatch(float step)
     }
     if (matchScene == SCENE_PENALTIES) {
         matchMinute = 90;
+        if (penaltyState == FINISHED && keeperCommitted)
+            keeperDiveProgress = glm::clamp(keeperDiveProgress + step / 0.35f, 0.0f, 1.0f);
         if (penaltyState == FINISHED && !penaltyShotRecorded) {
+            if (penaltyTaken[penaltyKickerTeam] < penaltyHistoryLimit)
+                penaltyHistory[penaltyKickerTeam][penaltyTaken[penaltyKickerTeam]] =
+                penaltyResult == "GOAL" ? 1 : 0;
             penaltyTaken[penaltyKickerTeam]++;
             if (penaltyResult == "GOAL") penaltyGoals[penaltyKickerTeam]++;
             penaltyShotRecorded = true;
@@ -1626,6 +1689,7 @@ void ResetPenalty()
     rotBall = 0.0f;
     kickAngle = 0.0f;
     keeperDive = 0.0f;
+    keeperDiveProgress = 0.0f;
     keeperPositionZ = 0.0f;
     targetZ = 0.0f;
     targetY = 0.9f;
@@ -1689,6 +1753,7 @@ void Animation()
             float reaction = std::max(0.0f, std::min((stateTime - 0.15f) / 0.62f, 1.0f));
             keeperPositionZ = keeperSide * 2.0f * reaction;
             keeperDive = keeperSide * 55.0f * reaction;
+            keeperDiveProgress = reaction;
         }
 
         if (ballPosition.x >= 51.2f && t < 1.0f) {
@@ -1919,10 +1984,10 @@ void createRunningTrack(BallMesh& mesh)
     float distance = 0.0f;
     auto addSample = [&](glm::vec2 inner, glm::vec2 outward, float length) {
         distance += length;
-        path.push_back({inner, outward, distance});
-    };
+        path.push_back({ inner, outward, distance });
+        };
     addSample(glm::vec2(-halfLength, -halfWidth - innerRadius), glm::vec2(0, -1), 0.0f);
-    addSample(glm::vec2( halfLength, -halfWidth - innerRadius), glm::vec2(0, -1), 2.0f * halfLength);
+    addSample(glm::vec2(halfLength, -halfWidth - innerRadius), glm::vec2(0, -1), 2.0f * halfLength);
     for (int corner = 0; corner < 4; ++corner) {
         glm::vec2 center(corner < 2 ? halfLength : -halfLength,
             corner == 0 || corner == 3 ? -halfWidth : halfWidth);
@@ -1941,9 +2006,9 @@ void createRunningTrack(BallMesh& mesh)
 
     std::vector<GLfloat> vertices;
     auto vertex = [&vertices](glm::vec2 point, float distance, float across) {
-        vertices.insert(vertices.end(), {point.x, 0.015f, point.y,
-            0.0f, 1.0f, 0.0f, distance / 4.0f, across / 4.0f});
-    };
+        vertices.insert(vertices.end(), { point.x, 0.015f, point.y,
+            0.0f, 1.0f, 0.0f, distance / 4.0f, across / 4.0f });
+        };
     for (size_t i = 1; i < path.size(); ++i) {
         const Sample& a = path[i - 1];
         const Sample& b = path[i];
@@ -2070,12 +2135,17 @@ void drawGoal(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4&
 void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, const glm::mat4& scene,
     glm::vec3 position, float yaw, GLuint texJersey, GLuint texHead,
     GLuint texShorts, GLuint texSkin, GLuint texShoes,
-    float kickAngle, float diveAngle, float walkAngle, int jerseyNumber, GLuint numberColor)
+    float kickAngle, float diveAngle, float walkAngle, int jerseyNumber, GLuint numberColor,
+    float jumpHeight, float headNod)
 {
     // Hierarchical modeling: shoulder -> elbow and hip -> knee.
-    glm::mat4 model = glm::translate(scene, position);
-    model = glm::rotate(model, glm::radians(diveAngle), glm::vec3(1, 0, 0));
+    glm::mat4 model = glm::translate(scene, position + glm::vec3(0.0f, jumpHeight, 0.0f));
     model = glm::rotate(model, glm::radians(yaw), glm::vec3(0, 1, 0));
+    if (std::fabs(diveAngle) > 0.01f) {
+        model = glm::translate(model, glm::vec3(0.0f, 0.82f, 0.0f));
+        model = glm::rotate(model, glm::radians(diveAngle), glm::vec3(0, 0, 1));
+        model = glm::translate(model, glm::vec3(0.0f, -0.82f, 0.0f));
+    }
     glm::mat4 modelTemp = model; // Same principle used in the original example.
 
     drawCube(modelLoc, torsoVAO, modelTemp, glm::vec3(0, 1.20f, 0),
@@ -2083,17 +2153,20 @@ void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, con
     if (jerseyNumber > 0 && numberColor != 0) {
         drawCube(modelLoc, VAO, modelTemp, glm::vec3(0, 1.20f, -0.131f),
             glm::vec3(0.31f, 0.32f, 0.014f), texShorts);
+        glm::mat4 digitsFacingOut = glm::scale(modelTemp, glm::vec3(-1.0f, 1.0f, 1.0f));
         float left = jerseyNumber >= 10 ? -0.12f : -0.06f;
         if (jerseyNumber >= 10)
-            drawScoreDigit(modelLoc, VAO, modelTemp, jerseyNumber / 10,
+            drawScoreDigit(modelLoc, VAO, digitsFacingOut, jerseyNumber / 10,
                 left, 1.10f, -0.146f, 0.11f, numberColor);
-        drawScoreDigit(modelLoc, VAO, modelTemp, jerseyNumber % 10,
+        drawScoreDigit(modelLoc, VAO, digitsFacingOut, jerseyNumber % 10,
             jerseyNumber >= 10 ? 0.015f : left, 1.10f, -0.146f,
             0.11f, numberColor);
     }
     drawCube(modelLoc, VAO, modelTemp, glm::vec3(0, 1.55f, 0),
         glm::vec3(0.12f, 0.13f, 0.12f), texSkin);
-    drawCube(modelLoc, headVAO, modelTemp, glm::vec3(0, 1.77f, 0),
+    glm::mat4 noddingHead = glm::translate(modelTemp, glm::vec3(0.0f, 1.67f, 0.0f));
+    noddingHead = glm::rotate(noddingHead, glm::radians(headNod), glm::vec3(1.0f, 0.0f, 0.0f));
+    drawCube(modelLoc, headVAO, noddingHead, glm::vec3(0.0f, 0.10f, 0.0f),
         glm::vec3(0.27f, 0.29f, 0.27f), texHead);
 
     for (int side = -1; side <= 1; side += 2) {
@@ -2112,6 +2185,128 @@ void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, con
             hip = glm::rotate(hip, glm::radians(side * walkAngle), glm::vec3(1, 0, 0));
         else if (side == 1)
             hip = glm::rotate(hip, glm::radians(-kickAngle), glm::vec3(1, 0, 0));
+        drawCube(modelLoc, VAO, hip, glm::vec3(0, -0.19f, 0),
+            glm::vec3(0.19f, 0.38f, 0.19f), texShorts);
+        glm::mat4 knee = glm::translate(hip, glm::vec3(0, -0.38f, 0));
+        drawCube(modelLoc, VAO, knee, glm::vec3(0, -0.19f, 0),
+            glm::vec3(0.15f, 0.38f, 0.15f), texSkin);
+        drawCube(modelLoc, VAO, knee, glm::vec3(0, -0.42f, 0.09f),
+            glm::vec3(0.17f, 0.11f, 0.29f), texShoes);
+    }
+}
+
+void drawGoalkeeperSave(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO,
+    const glm::mat4& scene, glm::vec3 position, float yaw,
+    GLuint jersey, GLuint face, GLuint shorts, GLuint skin, GLuint shoes,
+    GLuint glove, GLuint numberColor, int number, float progress, int direction)
+{
+    float p = glm::clamp(progress, 0.0f, 1.0f);
+    float armsFirst = smoothMatchStep(p * 2.15f);
+    float bodyFall = smoothMatchStep(p);
+    float legsFollow = smoothMatchStep((p - 0.16f) / 0.84f);
+    float side = direction < 0 ? -1.0f : 1.0f;
+    if (direction == 0) { bodyFall = 0.0f; legsFollow = 0.0f; }
+
+    glm::mat4 base = glm::translate(scene, position);
+    base = glm::rotate(base, glm::radians(yaw), glm::vec3(0, 1, 0));
+    auto leaning = [&](float amount) {
+        glm::mat4 m = glm::translate(base, glm::vec3(0.0f, 0.19f, 0.0f));
+        m = glm::rotate(m, glm::radians(-side * 86.0f * amount), glm::vec3(0, 0, 1));
+        return glm::translate(m, glm::vec3(0.0f, -0.19f, 0.0f));
+        };
+    glm::mat4 upper = leaning(bodyFall);
+    glm::mat4 lower = leaning(legsFollow);
+
+    drawCube(modelLoc, torsoVAO, upper, glm::vec3(0.0f, 1.20f, 0.0f),
+        glm::vec3(0.45f, 0.64f, 0.25f), jersey);
+    if (number > 0 && numberColor) {
+        drawCube(modelLoc, VAO, upper, glm::vec3(0, 1.20f, -0.131f),
+            glm::vec3(0.30f, 0.32f, 0.014f), shorts);
+        glm::mat4 frontDigits = glm::scale(upper, glm::vec3(-1.0f, 1.0f, 1.0f));
+        drawScoreDigit(modelLoc, VAO, frontDigits, number,
+            -0.06f, 1.10f, -0.146f, 0.11f, numberColor);
+    }
+    drawCube(modelLoc, VAO, upper, glm::vec3(0.0f, 1.55f, 0.0f),
+        glm::vec3(0.12f, 0.13f, 0.12f), skin);
+    drawCube(modelLoc, headVAO, upper, glm::vec3(0.0f, 1.77f, 0.0f),
+        glm::vec3(0.27f, 0.29f, 0.27f), face);
+
+    for (int armSide = -1; armSide <= 1; armSide += 2) {
+        glm::mat4 shoulder = glm::translate(upper, glm::vec3(armSide * 0.29f, 1.43f, 0.0f));
+        shoulder = glm::rotate(shoulder,
+            glm::radians(-8.0f - 164.0f * armsFirst), glm::vec3(1, 0, 0));
+        shoulder = glm::rotate(shoulder,
+            glm::radians(armSide * 11.0f * armsFirst), glm::vec3(0, 0, 1));
+        drawCube(modelLoc, VAO, shoulder, glm::vec3(0, -0.15f, 0),
+            glm::vec3(0.14f, 0.31f, 0.14f), jersey);
+        glm::mat4 elbow = glm::translate(shoulder, glm::vec3(0, -0.30f, 0));
+        drawCube(modelLoc, VAO, elbow, glm::vec3(0, -0.16f, 0),
+            glm::vec3(0.12f, 0.32f, 0.12f), skin);
+        drawCube(modelLoc, VAO, elbow, glm::vec3(0, -0.33f, 0),
+            glm::vec3(0.19f, 0.16f, 0.17f), glove);
+
+        glm::mat4 hip = glm::translate(lower, glm::vec3(armSide * 0.13f, 0.90f, 0));
+        hip = glm::rotate(hip, glm::radians(-side * 8.0f * legsFollow), glm::vec3(0, 0, 1));
+        drawCube(modelLoc, VAO, hip, glm::vec3(0, -0.19f, 0),
+            glm::vec3(0.19f, 0.38f, 0.19f), shorts);
+        glm::mat4 knee = glm::translate(hip, glm::vec3(0, -0.38f, 0));
+        drawCube(modelLoc, VAO, knee, glm::vec3(0, -0.19f, 0),
+            glm::vec3(0.15f, 0.38f, 0.15f), skin);
+        drawCube(modelLoc, VAO, knee, glm::vec3(0, -0.42f, 0.09f),
+            glm::vec3(0.17f, 0.11f, 0.29f), shoes);
+    }
+}
+
+void drawCelebrationCaptain(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, const glm::mat4& scene,
+    glm::vec3 position, float yaw, GLuint texJersey, GLuint texHead,
+    GLuint texShorts, GLuint texSkin, GLuint texShoes, int jerseyNumber, GLuint numberColor)
+{
+    glm::mat4 model = glm::translate(scene, position);
+    model = glm::rotate(model, glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+
+    drawCube(modelLoc, torsoVAO, model, glm::vec3(0.0f, 1.20f, 0.0f),
+        glm::vec3(0.45f, 0.64f, 0.25f), texJersey);
+    if (jerseyNumber > 0 && numberColor != 0) {
+        drawCube(modelLoc, VAO, model, glm::vec3(0.0f, 1.20f, -0.131f),
+            glm::vec3(0.31f, 0.32f, 0.014f), texShorts);
+        glm::mat4 digits = glm::scale(model, glm::vec3(-1.0f, 1.0f, 1.0f));
+        float left = jerseyNumber >= 10 ? -0.12f : -0.06f;
+        if (jerseyNumber >= 10)
+            drawScoreDigit(modelLoc, VAO, digits, jerseyNumber / 10,
+                left, 1.10f, -0.146f, 0.11f, numberColor);
+        drawScoreDigit(modelLoc, VAO, digits, jerseyNumber % 10,
+            jerseyNumber >= 10 ? 0.015f : left, 1.10f, -0.146f, 0.11f, numberColor);
+    }
+    drawCube(modelLoc, VAO, model, glm::vec3(0.0f, 1.55f, 0.0f),
+        glm::vec3(0.12f, 0.13f, 0.12f), texSkin);
+    drawCube(modelLoc, headVAO, model, glm::vec3(0.0f, 1.77f, 0.0f),
+        glm::vec3(0.27f, 0.29f, 0.27f), texHead);
+
+    auto armSegment = [&](glm::vec3 a, glm::vec3 b, GLuint material, float thickness) {
+        glm::vec3 direction = b - a;
+        float length = glm::length(direction);
+        if (length < 0.0001f) return;
+        direction /= length;
+        glm::vec3 axis = glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), direction);
+        if (glm::length(axis) < 0.0001f) axis = glm::vec3(1.0f, 0.0f, 0.0f);
+        else axis = glm::normalize(axis);
+        float angle = std::acos(glm::clamp(direction.y, -1.0f, 1.0f));
+        glm::mat4 piece = glm::translate(model, (a + b) * 0.5f);
+        piece = glm::rotate(piece, angle, axis);
+        drawCube(modelLoc, VAO, piece, glm::vec3(0.0f),
+            glm::vec3(thickness, length, thickness), material);
+        };
+
+    float handleY = 0.02f + trophyLiftHeight() + 0.37f * 1.36f;
+    for (int side = -1; side <= 1; side += 2) {
+        glm::vec3 shoulder(side * 0.30f, 1.43f, 0.03f);
+        glm::vec3 hand(side * 0.30f, handleY, 0.38f);
+        glm::vec3 elbow(side * 0.52f, (shoulder.y + hand.y) * 0.5f, 0.20f);
+        armSegment(shoulder, elbow, texJersey, 0.145f);
+        armSegment(elbow, hand, texSkin, 0.115f);
+        drawCube(modelLoc, VAO, model, hand, glm::vec3(0.16f, 0.15f, 0.17f), texSkin);
+
+        glm::mat4 hip = glm::translate(model, glm::vec3(side * 0.13f, 0.90f, 0));
         drawCube(modelLoc, VAO, hip, glm::vec3(0, -0.19f, 0),
             glm::vec3(0.19f, 0.38f, 0.19f), texShorts);
         glm::mat4 knee = glm::translate(hip, glm::vec3(0, -0.38f, 0));
@@ -2420,7 +2615,7 @@ bool loadBusWheelData(const char* filePath)
 glm::vec3 getBroadcastPosition()
 {
     if (activeCamera == 9)
-        return glm::vec3(0.0f, 92.0f, 135.0f);
+        return matchScene == SCENE_FINAL ? glm::vec3(0.0f, 92.0f, 38.0f) : glm::vec3(0.0f, 92.0f, 0.0f);
     if (activeCamera >= 1 && activeCamera <= 2) {
         const glm::vec3& dronePosition = broadcastCameraPositions[activeCamera - 1];
         glm::vec3 forward = trackedBallPosition - dronePosition;
@@ -2444,8 +2639,9 @@ glm::vec3 getBroadcastPosition()
 glm::mat4 getBroadcastView()
 {
     if (activeCamera == 9)
-        return glm::lookAt(getBroadcastPosition(), glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(0.0f, 1.0f, 0.0f));
+        return glm::lookAt(getBroadcastPosition(),
+            matchScene == SCENE_FINAL ? trophyFocusPosition : glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, -1.0f));
     if (activeCamera >= 1 && activeCamera <= 8)
         return glm::lookAt(getBroadcastPosition(), trackedBallPosition,
             glm::vec3(0.0f, 1.0f, 0.0f));
@@ -2459,14 +2655,20 @@ void drawFloodlightTowers(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     glUniform1i(textureModeLoc, 5);
     for (int i = 0; i < 4; ++i) {
         const glm::vec3& p = floodlightPositions[i];
-        drawCube(modelLoc, VAO, scene, p + glm::vec3(0.0f, 8.25f, 0.0f),
-            glm::vec3(0.50f, 16.50f, 0.50f), texMetal);
-        drawCube(modelLoc, VAO, scene, p + glm::vec3(0.0f, 17.45f, 0.0f),
-            glm::vec3(4.70f, 1.50f, 0.45f), texMetal);
-        for (int beam = 1; beam < 5; ++beam) {
-            float y = beam * 3.2f;
+        drawCube(modelLoc, VAO, scene, p + glm::vec3(0.0f, floodlightHeight * 0.49f, 0.0f),
+            glm::vec3(0.60f, floodlightHeight * 0.98f, 0.60f), texMetal);
+        glm::vec3 aim = floodlightTargets[i] - (p + glm::vec3(0.0f, floodlightHeight, 0.0f));
+        float facing = std::atan2(aim.x, aim.z);
+        float downwardTilt = std::atan2(-aim.y, glm::length(glm::vec2(aim.x, aim.z)));
+        glm::mat4 mount = glm::translate(scene, p + glm::vec3(0.0f, floodlightHeight, 0.0f));
+        mount = glm::rotate(mount, facing, glm::vec3(0.0f, 1.0f, 0.0f));
+        mount = glm::rotate(mount, downwardTilt, glm::vec3(1.0f, 0.0f, 0.0f));
+        drawCube(modelLoc, VAO, mount, glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(5.25f, 1.6f, 0.48f), texMetal);
+        for (int beam = 1; beam < 7; ++beam) {
+            float y = beam * (floodlightHeight - 1.0f) / 7.0f;
             drawCube(modelLoc, VAO, scene, p + glm::vec3(0.0f, y, 0.0f),
-                glm::vec3(1.0f, 0.12f, 0.9f), texMetal);
+                glm::vec3(1.15f, 0.10f, 1.05f), texMetal);
         }
     }
     glUniform1i(textureModeLoc, 0);
@@ -2477,16 +2679,19 @@ void drawFloodlightPanels(GLint modelLoc, GLuint VAO)
     glBindVertexArray(VAO);
     for (int i = 0; i < 4; ++i) {
         const glm::vec3& p = floodlightPositions[i];
+        glm::vec3 aim = floodlightTargets[i] - (p + glm::vec3(0.0f, floodlightHeight, 0.0f));
+        float facing = std::atan2(aim.x, aim.z);
+        float downwardTilt = std::atan2(-aim.y, glm::length(glm::vec2(aim.x, aim.z)));
+        glm::mat4 mount = glm::translate(glm::mat4(1.0f), p + glm::vec3(0.0f, floodlightHeight, 0.0f));
+        mount = glm::rotate(mount, facing, glm::vec3(0.0f, 1.0f, 0.0f));
+        mount = glm::rotate(mount, downwardTilt, glm::vec3(1.0f, 0.0f, 0.0f));
         for (int row = 0; row < 2; ++row) {
-            for (int col = 0; col < 6; ++col) {
-                for (int face = -1; face <= 1; face += 2) {
-                    glm::vec3 lampPosition = p + glm::vec3((col - 2.5f) * 0.70f,
-                        17.13f + row * 0.62f, face * 0.27f);
-                    glm::mat4 m = glm::translate(glm::mat4(1.0f), lampPosition);
-                    m = glm::scale(m, glm::vec3(0.56f, 0.44f, 0.12f));
-                    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(m));
-                    glDrawArrays(GL_TRIANGLES, 0, 36);
-                }
+            for (int col = 0; col < 7; ++col) {
+                glm::mat4 m = glm::translate(mount,
+                    glm::vec3((col - 3.0f) * 0.68f, (row - 0.5f) * 0.68f, 0.30f));
+                m = glm::scale(m, glm::vec3(0.54f, 0.48f, 0.12f));
+                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(m));
+                glDrawArrays(GL_TRIANGLES, 0, 36);
             }
         }
     }
@@ -2575,7 +2780,7 @@ void drawCrowd(GLint modelLoc, GLuint VAO, GLuint jerseyVAO, GLuint headVAO,
     GLuint texHead, const GLuint crowdHeads[4], GLuint texPumasShorts, GLuint texAtlanteShorts,
     GLuint texHeadJoy, GLuint texHeadAngry, GLuint texHeadSad, GLuint texHeadSurprise)
 {
-    float cheerTime = matchScene == SCENE_PUMAS_GOAL ? sceneTime - 5.2f :
+    float cheerTime = matchScene == SCENE_PUMAS_GOAL ? sceneTime - 5.35f :
         matchScene == SCENE_ATLANTE_GOAL ? sceneTime - 4.1f :
         matchScene == SCENE_PENALTIES ? penaltyRestTime : sceneTime;
     int celebratingSide = crowdCelebratingSide();
@@ -2599,7 +2804,8 @@ void drawCrowd(GLint modelLoc, GLuint VAO, GLuint jerseyVAO, GLuint headVAO,
                     GLuint face = crowdHeads[(section + 2 * row + seat) % 4];
                     if (celebrating && texHeadJoy) {
                         face = texHeadJoy;
-                    } else if (isRivalConceding) {
+                    }
+                    else if (isRivalConceding) {
                         face = ((section + row + seat) % 3 == 0) ? texHeadSurprise :
                             (((section + seat) % 2 == 0) ? texHeadAngry : texHeadSad);
                     }
@@ -2688,18 +2894,17 @@ void drawTrophy(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat
 {
     glUniform1i(textureModeLoc, 7);
     bool finalLift = matchScene == SCENE_FINAL;
-    glm::mat4 pedestal = glm::translate(scene, finalLift ? glm::vec3(0.0f, -10.0f, 44.0f) : glm::vec3(0.0f, 0.0f, 44.0f));
+    glm::mat4 pedestal = glm::translate(scene, glm::vec3(0.0f, 0.0f, 44.0f));
     if (!finalLift) {
         drawCube(modelLoc, VAO, pedestal, glm::vec3(0.0f, 0.25f, 0.0f),
             glm::vec3(3.6f, 0.5f, 3.1f), texBase);
         drawCube(modelLoc, VAO, pedestal, glm::vec3(0.0f, 0.55f, 0.0f),
             glm::vec3(2.0f, 0.1f, 1.8f), texWhite);
     }
-    glm::vec3 liftedOffset = finalLift ? glm::vec3(0.0f, 2.45f + 0.18f * sinf(elapsed * 3.0f), 38.0f) : glm::vec3(0.0f, 0.65f, 44.0f);
-    glm::mat4 trophy = glm::translate(scene, liftedOffset);
-    trophy = glm::rotate(trophy, glm::radians(finalLift ? 10.0f * sinf(elapsed * 1.2f) : elapsed * 26.0f),
-        glm::vec3(0.0f, 1.0f, 0.0f));
-    trophy = glm::scale(trophy, glm::vec3(0.72f));
+    glm::vec3 position = finalLift ? glm::vec3(0.0f, 0.02f + trophyLiftHeight(), 37.62f)
+        : glm::vec3(0.0f, 0.65f, 44.0f);
+    glm::mat4 trophy = glm::translate(scene, position);
+    trophy = glm::scale(trophy, glm::vec3(finalLift ? 0.37f : 0.64f));
     drawCube(modelLoc, VAO, trophy, glm::vec3(0.0f, 0.12f, 0.0f),
         glm::vec3(0.95f, 0.24f, 0.95f), texGold);
     drawCube(modelLoc, VAO, trophy, glm::vec3(0.0f, 0.44f, 0.0f),
@@ -2788,7 +2993,8 @@ void drawScoreWord(GLint modelLoc, GLuint VAO, const glm::mat4& matrix,
 }
 
 void drawMatchScoreboard(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
-    GLuint dark, GLuint white, GLuint gold, GLuint red)
+    const BallMesh& whiteMesh, const BallMesh& blackMesh,
+    GLuint dark, GLuint white, GLuint gold, GLuint red, GLuint green, GLuint pending)
 {
     glm::mat4 board = glm::translate(scene, glm::vec3(0.0f, 0.0f, -70.0f));
     drawCube(modelLoc, VAO, board, glm::vec3(-7.5f, 5.8f, 0),
@@ -2817,6 +3023,23 @@ void drawMatchScoreboard(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
         drawScoreWord(modelLoc, VAO, board, "PEN", -7.8f, 9.7f, 0.39f, 0.13f, red);
         drawScoreDigit(modelLoc, VAO, board, std::min(9, penaltyGoals[0]), -4.45f, 9.15f, 0.4f, 0.42f, white);
         drawScoreDigit(modelLoc, VAO, board, std::min(9, penaltyGoals[1]), 4.45f, 9.15f, 0.4f, 0.42f, white);
+        for (int team = 0; team < 2; ++team) {
+            int first = std::max(0, penaltyTaken[team] - 5);
+            for (int attempt = 0; attempt < 5; ++attempt) {
+                int index = first + attempt;
+                GLuint color = pending;
+                if (index < penaltyTaken[team] && index < penaltyHistoryLimit)
+                    color = penaltyHistory[team][index] == 1 ? red : green;
+                float x = team == 0 ? -5.95f + attempt * 0.58f
+                    : 3.63f + attempt * 0.58f;
+                glm::vec3 dot(x, 8.72f, 0.45f);
+                drawSolidSphere(modelLoc, board, dot, glm::vec3(0.24f, 0.24f, 0.11f),
+                    whiteMesh, blackMesh, white);
+                dot.z += 0.085f;
+                drawSolidSphere(modelLoc, board, dot, glm::vec3(0.175f, 0.175f, 0.11f),
+                    whiteMesh, blackMesh, color);
+            }
+        }
     }
 }
 
