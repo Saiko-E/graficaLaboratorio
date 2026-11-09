@@ -322,6 +322,29 @@ int penaltyGoals[2] = { 0, 0 };
 const int penaltyHistoryLimit = 64;
 int penaltyHistory[2][penaltyHistoryLimit] = {};
 
+int decidePenaltyWinner(const int taken[2], const int scored[2])
+{
+    const int limit = 5;
+    if (taken[0] <= limit && taken[1] <= limit) {
+        if (scored[0] > scored[1] + std::max(0, limit - taken[1])) return 0;
+        if (scored[1] > scored[0] + std::max(0, limit - taken[0])) return 1;
+        if (taken[0] == limit && taken[1] == limit && scored[0] != scored[1])
+            return scored[0] > scored[1] ? 0 : 1;
+        return -1;
+    }
+    if (taken[0] == taken[1] && taken[0] > limit && scored[0] != scored[1])
+        return scored[0] > scored[1] ? 0 : 1;
+    return -1;
+}
+
+int countPenaltyGoals(int team)
+{
+    int total = 0;
+    for (int i = 0; i < std::min(penaltyTaken[team], penaltyHistoryLimit); ++i)
+        if (penaltyHistory[team][i] == 1) ++total;
+    return total;
+}
+
 int penaltyKickerTeam = 0;
 int penaltyWinner = -1;
 int penaltyNextKickerTeam = -1;
@@ -1634,34 +1657,35 @@ void updateMatch(float step)
         if (penaltyState == FINISHED && keeperCommitted)
             keeperDiveProgress = glm::clamp(keeperDiveProgress + step / 0.35f, 0.0f, 1.0f);
         if (penaltyState == FINISHED && !penaltyShotRecorded) {
-            if (penaltyTaken[penaltyKickerTeam] < penaltyHistoryLimit)
-                penaltyHistory[penaltyKickerTeam][penaltyTaken[penaltyKickerTeam]] =
+            if (penaltyTaken[penaltyKickerTeam] >= penaltyHistoryLimit) {
+                std::cerr << "Penalty history limit reached. No winner was assigned." << std::endl;
+                penaltyShotRecorded = true;
+                penaltyRestTime = 0.0f;
+                autoSequence = false;
+                return;
+            }
+            penaltyHistory[penaltyKickerTeam][penaltyTaken[penaltyKickerTeam]] =
                 penaltyResult == "GOAL" ? 1 : 0;
-            penaltyTaken[penaltyKickerTeam]++;
-            if (penaltyResult == "GOAL") penaltyGoals[penaltyKickerTeam]++;
+            ++penaltyTaken[penaltyKickerTeam];
+            penaltyGoals[0] = countPenaltyGoals(0);
+            penaltyGoals[1] = countPenaltyGoals(1);
             penaltyShotRecorded = true;
             penaltyRestTime = 0.0f;
-            penaltyNextKickerTeam = penaltyKickerTeam;
-            int remainingPumas = std::max(0, 5 - penaltyTaken[0]);
-            int remainingAtlante = std::max(0, 5 - penaltyTaken[1]);
-            if (penaltyGoals[0] > penaltyGoals[1] + remainingAtlante)
-                penaltyWinner = 0;
-            else if (penaltyGoals[1] > penaltyGoals[0] + remainingPumas)
-                penaltyWinner = 1;
-            else if (penaltyTaken[0] == penaltyTaken[1] && penaltyTaken[0] >= 5 &&
-                penaltyGoals[0] != penaltyGoals[1])
-                penaltyWinner = penaltyGoals[0] > penaltyGoals[1] ? 0 : 1;
+            penaltyNextKickerTeam = 1 - penaltyKickerTeam;
+            penaltyWinner = decidePenaltyWinner(penaltyTaken, penaltyGoals);
             if (penaltyWinner >= 0) {
-                std::cout << "Winner: " << (penaltyWinner == 0 ? "Pumas" : "Atlante") << std::endl;
-                if (autoSequence) requestMatchScene(SCENE_FINAL);
-            }
-            else {
-                penaltyNextKickerTeam = 1 - penaltyKickerTeam;
+                std::cout << "Winner: " << (penaltyWinner == 0 ? "Pumas" : "Atlante")
+                    << " | Penalties " << penaltyGoals[0] << "-" << penaltyGoals[1]
+                    << " | Attempts " << penaltyTaken[0] << "-" << penaltyTaken[1] << std::endl;
             }
         }
         if (penaltyShotRecorded) {
             penaltyRestTime += step;
-            if (penaltyRestTime > 1.1f && penaltyWinner < 0) {
+            if (penaltyWinner >= 0) {
+                if (autoSequence && penaltyRestTime >= 2.3f && fadePhase == FADE_NONE)
+                    requestMatchScene(SCENE_FINAL);
+            }
+            else if (penaltyRestTime >= 1.55f) {
                 penaltyKickerTeam = penaltyNextKickerTeam;
                 ResetPenalty();
                 penaltyShotRecorded = false;
@@ -3001,8 +3025,8 @@ void drawMatchScoreboard(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
         glm::vec3(0.45f, 11.6f, 0.45f), dark);
     drawCube(modelLoc, VAO, board, glm::vec3(7.5f, 5.8f, 0),
         glm::vec3(0.45f, 11.6f, 0.45f), dark);
-    drawCube(modelLoc, VAO, board, glm::vec3(0.0f, 11.8f, 0),
-        glm::vec3(18.0f, 7.0f, 0.55f), dark);
+    drawCube(modelLoc, VAO, board, glm::vec3(0.0f, 11.60f, 0),
+        glm::vec3(18.0f, 7.40f, 0.55f), dark);
     drawScoreWord(modelLoc, VAO, board, "PUMAS", -7.6f, 14.2f, 0.35f, 0.15f, gold);
     drawScoreWord(modelLoc, VAO, board, "ATLANTE", 1.4f, 14.2f, 0.35f, 0.15f, white);
     drawScoreDigit(modelLoc, VAO, board, std::min(9, pumasScore), -5.7f, 10.9f, 0.40f, 1.15f, white);
@@ -3024,20 +3048,36 @@ void drawMatchScoreboard(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
         drawScoreDigit(modelLoc, VAO, board, std::min(9, penaltyGoals[0]), -4.45f, 9.15f, 0.4f, 0.42f, white);
         drawScoreDigit(modelLoc, VAO, board, std::min(9, penaltyGoals[1]), 4.45f, 9.15f, 0.4f, 0.42f, white);
         for (int team = 0; team < 2; ++team) {
-            int first = std::max(0, penaltyTaken[team] - 5);
             for (int attempt = 0; attempt < 5; ++attempt) {
-                int index = first + attempt;
                 GLuint color = pending;
-                if (index < penaltyTaken[team] && index < penaltyHistoryLimit)
-                    color = penaltyHistory[team][index] == 1 ? red : green;
+                if (attempt < penaltyTaken[team] && attempt < penaltyHistoryLimit) {
+                    if (penaltyHistory[team][attempt] == 1) color = green;
+                    else if (penaltyHistory[team][attempt] == 0) color = red;
+                }
                 float x = team == 0 ? -5.95f + attempt * 0.58f
                     : 3.63f + attempt * 0.58f;
-                glm::vec3 dot(x, 8.72f, 0.45f);
+                glm::vec3 dot(x, 8.80f, 0.45f);
                 drawSolidSphere(modelLoc, board, dot, glm::vec3(0.24f, 0.24f, 0.11f),
                     whiteMesh, blackMesh, white);
                 dot.z += 0.085f;
                 drawSolidSphere(modelLoc, board, dot, glm::vec3(0.175f, 0.175f, 0.11f),
                     whiteMesh, blackMesh, color);
+            }
+            if (penaltyTaken[team] > 5) {
+                int extraStart = std::max(5, penaltyTaken[team] - 5);
+                for (int extra = 0; extra < 5; ++extra) {
+                    int index = extraStart + extra;
+                    if (index >= penaltyTaken[team] || index >= penaltyHistoryLimit) break;
+                    GLuint color = penaltyHistory[team][index] == 1 ? green : red;
+                    float x = team == 0 ? -5.95f + extra * 0.58f
+                        : 3.63f + extra * 0.58f;
+                    glm::vec3 dot(x, 8.24f, 0.45f);
+                    drawSolidSphere(modelLoc, board, dot, glm::vec3(0.15f, 0.15f, 0.10f),
+                        whiteMesh, blackMesh, white);
+                    dot.z += 0.08f;
+                    drawSolidSphere(modelLoc, board, dot, glm::vec3(0.11f, 0.11f, 0.08f),
+                        whiteMesh, blackMesh, color);
+                }
             }
         }
     }
