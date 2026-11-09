@@ -8,33 +8,20 @@
 #include <fstream>
 #include <sstream>
 #include <memory>
-// GLEW
+
 #include <GL/glew.h>
 
-// GLFW
 #include <GLFW/glfw3.h>
 
-// Other Libs
-
-
-// GLM Mathematics
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-//Load Models
-
-
-
-// Other includes
 
 #include "Shader.h"
 #include "Camera.h"
 #include "Model.h"
 #include "SOIL2/SOIL2.h"
 
-
-// Function prototypes
 struct BallMesh;
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void MouseCallback(GLFWwindow* window, double xPos, double yPos);
@@ -55,8 +42,6 @@ GLuint createFadeProgram();
 void drawFadeOverlay(GLuint program, GLuint vao);
 bool loadBusWheelData(const char* filePath);
 
-
-//================= draw function =====================================
 GLuint CreateSolidColorTexture(GLubyte r, GLubyte g, GLubyte b);
 GLuint LoadDiffuseTexture(const char* path);
 void VerifyModelTextures(const std::string& modelPath);
@@ -98,7 +83,7 @@ void drawTrees(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
     GLuint texBark, GLuint texLeavesDark, GLuint texLeavesLight);
 void drawBird(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
-    GLuint texBird, GLuint texBeak, float elapsed, GLuint texEye = 0);
+    GLuint texBird, GLuint texBeak, float elapsed);
 void drawFireworks(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     float elapsed, GLuint texGold, GLuint texBlue, GLuint texRed, GLuint texWhite);
 void drawFloodlightTowers(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
@@ -124,12 +109,9 @@ glm::vec3 getBroadcastPosition();
 void ResetPenalty();
 float RandomFloat(float minValue, float maxValue);
 
-
-// Window dimensions
 const GLuint WIDTH = 1280, HEIGHT = 720;
 int SCREEN_WIDTH, SCREEN_HEIGHT;
 
-// Camera
 Camera  camera(glm::vec3(32.0f, 2.0f, 0.0f),
     glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f);
 GLfloat lastX = WIDTH / 2.0;
@@ -137,11 +119,9 @@ GLfloat lastY = HEIGHT / 2.0;
 bool keys[1024];
 bool firstMouse = true;
 glm::vec3 freeCameraPosition(32.0f, 2.0f, 0.0f);
-// Light attributes
 glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
 bool fireworksActive = false;
 float fireworksStartTime = 0.0f;
-
 
 float vertices[] = {
      -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -186,8 +166,6 @@ float vertices[] = {
        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 };
-
-
 
 enum PenaltyState { READY, PREPARING, KICKING, FLYING, FINISHED };
 PenaltyState penaltyState = READY;
@@ -299,6 +277,48 @@ glm::vec3 getPlayerLineupPosition(int team, int player)
     return glm::vec3(sign * 59.0f, 0.0f, -26.0f + 5.2f * player);
 }
 
+glm::vec3 getPreMatchFocusTargetForTeam(int team)
+{
+    glm::vec3 busTarget = teamBuses[team].position + glm::vec3(0.0f, 2.1f, 0.0f);
+    if (!arrivalStarted)
+        return busTarget;
+
+    if (teamBuses[team].state == BUS_COMPLETED && teamLineupTime[team] > 0.0f) {
+        glm::vec3 averagePlayers(0.0f);
+        int visiblePlayers = 0;
+        for (int player = 0; player < playersPerTeam; ++player) {
+            float walkTime = teamLineupTime[team] - player * playerExitDelay;
+            if (walkTime < 0.0f) continue;
+            float t = glm::clamp(walkTime / playerWalkDuration, 0.0f, 1.0f);
+            float eased = t * t * (3.0f - 2.0f * t);
+            glm::vec3 start = getPlayerExitPosition(team);
+            glm::vec3 finish = getPlayerLineupPosition(team, player);
+            averagePlayers += glm::mix(start, finish, eased);
+            ++visiblePlayers;
+        }
+        if (visiblePlayers > 0) {
+            averagePlayers /= static_cast<float>(visiblePlayers);
+            return glm::mix(busTarget, averagePlayers + glm::vec3(0.0f, 1.0f, 0.0f), 0.62f);
+        }
+    }
+    return busTarget;
+}
+
+glm::vec3 getPreMatchFocusTarget()
+{
+    if (!arrivalStarted)
+        return glm::vec3(0.0f, 0.11f, 0.0f);
+
+    if (activeCamera >= 1 && activeCamera <= 8) {
+        int team = broadcastCameraPositions[activeCamera - 1].z < 0.0f ? 0 : 1;
+        return getPreMatchFocusTargetForTeam(team);
+    }
+
+    glm::vec3 leftTarget = getPreMatchFocusTargetForTeam(0);
+    glm::vec3 rightTarget = getPreMatchFocusTargetForTeam(1);
+    return glm::mix(leftTarget, rightTarget, 0.5f);
+}
+
 enum MatchScene {
     SCENE_IDLE, SCENE_ARRIVAL, SCENE_KICKOFF,
     SCENE_PUMAS_GOAL, SCENE_ATLANTE_GOAL, SCENE_PENALTIES, SCENE_FINAL
@@ -357,7 +377,6 @@ float trophyLiftHeight()
     float t = glm::clamp((sceneTime - 1.15f) / 2.75f, 0.0f, 1.0f);
     return 1.72f * t * t * (3.0f - 2.0f * t);
 }
-
 
 const char* getSceneLabel()
 {
@@ -521,29 +540,21 @@ float yawTowardBall(glm::vec3 player, glm::vec3 ball, float fallback)
     return glm::degrees(std::atan2(d.x, d.y));
 }
 
-// Deltatime
-GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
-GLfloat lastFrame = 0.0f;  	// Time of last frame
+GLfloat deltaTime = 0.0f;
+GLfloat lastFrame = 0.0f;
 float animationClock = 0.0f;
 
 int main()
 {
-    // Init GLFW
     glfwInit();
-    // Set all the required options for GLFW
-    /*glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);*/
 
-    // Create a GLFWwindow object that we can use for GLFW's functions
-    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-    const GLFWvidmode* screenMode = monitor ? glfwGetVideoMode(monitor) : nullptr;
-    GLFWwindow* window = glfwCreateWindow(screenMode ? screenMode->width : WIDTH,
-        screenMode ? screenMode->height : HEIGHT,
-        "Pumas vs Atlante - Estadio", monitor, nullptr);
-
+    GLFWwindow* window = glfwCreateWindow(
+        1280,
+        720,
+        "Pumas vs Atlante - Estadio",
+        nullptr,
+        nullptr
+    );
     if (nullptr == window)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -556,7 +567,6 @@ int main()
 
     glfwGetFramebufferSize(window, &SCREEN_WIDTH, &SCREEN_HEIGHT);
 
-    // Set the required callback functions
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetCursorPosCallback(window, MouseCallback);
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow*, int width, int height) {
@@ -565,23 +575,15 @@ int main()
         glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         });
 
-    // GLFW Options
-    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    // Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
     glewExperimental = GL_TRUE;
-    // Initialize GLEW to setup the OpenGL Function pointers
     if (GLEW_OK != glewInit())
     {
         std::cout << "Failed to initialize GLEW" << std::endl;
         return EXIT_FAILURE;
     }
 
-    // Define the viewport dimensions
     glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     srand(static_cast<unsigned int>(time(nullptr)));
-
-
 
     Shader lightingShader("Shader/lighting.vs", "Shader/lighting.frag");
     Shader lampShader("Shader/lamp.vs", "Shader/lamp.frag");
@@ -665,21 +667,18 @@ int main()
         }
     }
 
-    // First, set the container's VAO (and VBO)
     GLuint VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    // Position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
     glEnableVertexAttribArray(0);
-    // normal attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // Keep the original cube unchanged; only the jersey torso needs UVs.
+    // El uniforme utiliza su propio VAO para aplicar las texturas.
     static_assert(sizeof(vertices) / sizeof(vertices[0]) == 36 * 6, "Expected 36 cube vertices");
     GLfloat jerseyVertices[36 * 8];
     for (int i = 0; i < 36; ++i) {
@@ -704,7 +703,7 @@ int main()
     glEnableVertexAttribArray(2);
     glBindVertexArray(0);
 
-    // Each cube face maps to its own cell in the player's cross-shaped head atlas.
+    // UV de la cabeza según la cara del cubo.
     GLfloat headVertices[36 * 8];
     for (int i = 0; i < 36; ++i) {
         for (int j = 0; j < 6; ++j)
@@ -734,7 +733,6 @@ int main()
     glEnableVertexAttribArray(2);
     glBindVertexArray(0);
 
-
     GLuint fadeProgram = createFadeProgram();
     GLuint fadeVAO, fadeVBO;
     const float fadeVertices[] = { -1.f,-1.f, 1.f,-1.f, 1.f,1.f,
@@ -748,7 +746,6 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glBindVertexArray(0);
 
-    // Single pixel solid color textures 
     GLuint texGrass = LoadDiffuseTexture("Models/Textures/Grass005_Color.jpg");
     if (!texGrass) texGrass = CreateSolidColorTexture(35, 145, 55);
     GLuint texWhite = CreateSolidColorTexture(245, 245, 245);
@@ -818,8 +815,6 @@ int main()
     if (!texBird) texBird = CreateSolidColorTexture(83, 89, 96);
     GLuint texBeak = LoadDiffuseTexture("Models/Textures/rough_wood_diff_1k.jpg");
     if (!texBeak) texBeak = CreateSolidColorTexture(241, 167, 52);
-    GLuint texBirdEye = LoadDiffuseTexture("Models/Textures/bird_eye.png");
-    if (!texBirdEye) texBirdEye = CreateSolidColorTexture(235, 175, 25);
     GLuint texDroneBody = LoadDiffuseTexture("Models/Textures/blue_metal_plate_diff_1k.jpg");
     if (!texDroneBody) texDroneBody = CreateSolidColorTexture(35, 35, 55);
     GLuint texDroneArm = LoadDiffuseTexture("Models/Textures/metal_plate_04_diff_1k.jpg");
@@ -850,13 +845,11 @@ int main()
     GLuint texAsphalt = LoadDiffuseTexture("Models/Textures/clean_asphalt_diff_1k.jpg");
     if (!texAsphalt) texAsphalt = CreateSolidColorTexture(112, 108, 103);
 
-    // spherical ball 
     BallMesh whiteMesh, blackMesh;
     createBall(whiteMesh, blackMesh);
     BallMesh runningTrackMesh;
     createRunningTrack(runningTrackMesh);
 
-    // Set texture units
     lightingShader.Use();
     glUniform1i(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0);
     glUniform1i(glGetUniformLocation(lightingShader.Program, "material.specular"), 1);
@@ -874,16 +867,13 @@ int main()
 
     glm::mat4 projection = glm::perspective(glm::radians(camera.GetZoom()), (GLfloat)SCREEN_WIDTH / (GLfloat)SCREEN_HEIGHT, 0.1f, 300.0f);
 
-    // Game loop
     while (!glfwWindowShouldClose(window))
     {
 
-        // Calculate deltatime of current frame
         GLfloat currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
         glfwPollEvents();
         if (!sequencePaused) {
             animationClock += deltaTime;
@@ -899,7 +889,8 @@ int main()
             matchScene == SCENE_ATLANTE_GOAL || matchScene == SCENE_PENALTIES;
         float trackingAmount = 1.0f - std::exp(-4.0f * std::max(0.0f, sequencePaused ? 0.0f : deltaTime));
         glm::vec3 trackedTarget = matchScene == SCENE_FINAL ? trophyFocusPosition :
-            ballVisible ? ballPosition : glm::vec3(0.0f, 0.11f, 0.0f);
+            ballVisible ? ballPosition :
+            ((matchScene == SCENE_ARRIVAL || matchScene == SCENE_IDLE) ? getPreMatchFocusTarget() : glm::vec3(0.0f, 0.11f, 0.0f));
         trackedBallPosition = glm::mix(trackedBallPosition, trackedTarget, trackingAmount);
         std::string title = "PUMAS " + std::to_string(pumasScore) + " - " +
             std::to_string(atlanteScore) + " ATLANTE | " + getSceneLabel() +
@@ -908,19 +899,13 @@ int main()
             std::to_string(penaltyGoals[1]) + " | P: tirar penal | SPACE: pausa | R: reiniciar";
         glfwSetWindowTitle(window, title.c_str());
 
-        // Clear the colorbuffer
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // OpenGL options
         glEnable(GL_DEPTH_TEST);
 
+        glm::mat4 modelTemp = glm::mat4(1.0f);
 
-        glm::mat4 modelTemp = glm::mat4(1.0f); //Temp
-
-
-
-        // Use cooresponding shader when setting uniforms/drawing objects
         lightingShader.Use();
 
         glUniform1i(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0);
@@ -935,14 +920,11 @@ int main()
         glm::vec3 viewPosition = getBroadcastPosition();
         glUniform3f(viewPosLoc, viewPosition.x, viewPosition.y, viewPosition.z);
 
-
-        // Directional light
         glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.direction"), -0.2f, -1.0f, -0.3f);
         glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.ambient"), 0.23f, 0.25f, 0.32f);
         glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.diffuse"),
             0.18f, 0.21f, 0.30f);
         glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.specular"), 0.3f, 0.3f, 0.3f);
-
 
         for (int i = 0; i < 4; ++i) {
             glm::vec3 p = floodlightPositions[i] + glm::vec3(0.0f, floodlightHeight, 0.0f);
@@ -992,14 +974,12 @@ int main()
             glUniform1f(glGetUniformLocation(lightingShader.Program, (name + "outerCutOff").c_str()), glm::cos(glm::radians(47.0f)));
         }
 
-        // Set material properties
         glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 5.0f);
 
-        // Create camera transformations
         glm::mat4 view;
         view = getBroadcastView();
         projection = glm::perspective(glm::radians(activeCamera == 9 ? 62.0f :
-            (activeCamera == 7 || activeCamera == 8 ? 54.0f : camera.GetZoom())),
+            (activeCamera == 1 || activeCamera == 2 ? 54.0f : camera.GetZoom())),
             (GLfloat)SCREEN_WIDTH / (GLfloat)SCREEN_HEIGHT, 0.1f, 300.0f);
 
         skyShader.Use();
@@ -1018,21 +998,15 @@ int main()
         glEnable(GL_DEPTH_TEST);
         lightingShader.Use();
 
-        // Get the uniform locations
         GLint modelLoc = glGetUniformLocation(lightingShader.Program, "model");
         GLint viewLoc = glGetUniformLocation(lightingShader.Program, "view");
         GLint projLoc = glGetUniformLocation(lightingShader.Program, "projection");
 
-        // Pass the matrices to the shader
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-
         glm::mat4 model(1);
 
-
-
-        //Carga de modelo 
         view = getBroadcastView();
         model = glm::mat4(1);
         glUniform1i(glGetUniformLocation(lightingShader.Program, "transparency"), 0);
@@ -1244,7 +1218,7 @@ int main()
         glBindTexture(GL_TEXTURE_2D, texSpecular);
         glActiveTexture(GL_TEXTURE0);
         drawBird(modelLoc, textureModeLoc, VAO, modelTemp, whiteMesh, blackMesh,
-            texBird, texBeak, animationClock, texBirdEye);
+            texBird, texBeak, animationClock);
         if (fireworksActive) {
             float elapsed = animationClock - fireworksStartTime;
             if (elapsed < 4.8f)
@@ -1316,7 +1290,6 @@ int main()
         glfwSwapBuffers(window);
     }
 
-    //DELETE BLOCK. THIS FREE MEMORY 
     deleteBallMesh(whiteMesh);
     deleteBallMesh(blackMesh);
     deleteBallMesh(runningTrackMesh);
@@ -1335,24 +1308,20 @@ int main()
                          texDroneBody, texDroneArm, texDroneRotor, texDroneLens,
                          texShorts, texSkin, texShoes, texPosts, texNet,
                          texSpecular, texBark, texLeavesDark,
-                         texLeavesLight, texBird, texBeak, texBirdEye, texGold, texMarble, texDarkWood, texFloodlight, texTowerMetal, texConcrete, texWalkway, texRunningTrack, texWood, texAsphalt, texFacade, texGravelConcrete };
+                         texLeavesLight, texBird, texBeak, texGold, texMarble, texDarkWood, texFloodlight, texTowerMetal, texConcrete, texWalkway, texRunningTrack, texWood, texAsphalt, texFacade, texGravelConcrete };
     glDeleteTextures(sizeof(textures) / sizeof(textures[0]), textures);
     for (int i = 0; i < 2; ++i) busBodyModels[i].reset();
     for (int i = 0; i < 6; ++i) busWheelModels[i].reset();
     broadcastCameraBase.reset();
     broadcastCameraHead.reset();
-    // Terminate GLFW, clearing any resources allocated by GLFW.
     glfwTerminate();
-
-
 
     return 0;
 }
 
-// Moves/alters the camera positions based on user input
 void DoMovement()
 {
-    if (activeCamera == 7 || activeCamera == 8) {
+    if (activeCamera == 1 || activeCamera == 2) {
         glm::vec3& dronePosition = broadcastCameraPositions[activeCamera - 1];
         glm::vec3 horizontal = trackedBallPosition - dronePosition;
         horizontal.y = 0.0f;
@@ -1388,12 +1357,8 @@ void DoMovement()
     freeCameraPosition.y = glm::clamp(freeCameraPosition.y, 1.0f, 32.0f);
     freeCameraPosition.z = glm::clamp(freeCameraPosition.z, -75.0f, 75.0f);
 
-
-
-
 }
 
-// Is called whenever a key is pressed/released via GLFW
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -1825,21 +1790,13 @@ void MouseCallback(GLFWwindow* window, double xPos, double yPos)
     }
 
     GLfloat xOffset = xPos - lastX;
-    GLfloat yOffset = lastY - yPos;  // Reversed since y-coordinates go from bottom to left
+    GLfloat yOffset = lastY - yPos;
 
     lastX = xPos;
     lastY = yPos;
 
     camera.ProcessMouseMovement(xOffset, yOffset);
 }
-
-
-
-
-
-
-
-
 
 GLuint CreateSolidColorTexture(GLubyte r, GLubyte g, GLubyte b)
 {
@@ -1924,7 +1881,6 @@ void VerifyModelTextures(const std::string& modelPath)
     if (!foundUV) std::cerr << "OBJ without UV coordinates (vt): " << modelPath << std::endl;
 }
 
-
 void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent,
     glm::vec3 position, glm::vec3 size, GLuint texture, float yaw)
 {
@@ -1942,13 +1898,12 @@ void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent,
 void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     GLuint texGrass, GLuint texWhite)
 {
-    // Ground: the upper surface is at y=0.
+    // Superficie del terreno en Y = 0.
     glUniform1i(textureModeLoc, 1);
     drawCube(modelLoc, VAO, scene, glm::vec3(0, -0.04f, 0),
         glm::vec3(105, 0.08f, 68), texGrass);
     glUniform1i(textureModeLoc, 0);
 
-    // Touchlines, goal lines, and halfway line.
     for (int side = -1; side <= 1; side += 2) {
         drawCube(modelLoc, VAO, scene, glm::vec3(0, 0.012f, side * 34.0f),
             glm::vec3(105, 0.024f, 0.12f), texWhite);
@@ -1958,7 +1913,6 @@ void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
     drawCube(modelLoc, VAO, scene, glm::vec3(0, 0.012f, 0),
         glm::vec3(0.12f, 0.024f, 68), texWhite);
 
-    // Center circle made of rotated segments of the original cube.
     const float PI = 3.14159265358979323846f;
     const int segments = 48;
     const float radius = 9.15f;
@@ -1975,7 +1929,6 @@ void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
     drawCube(modelLoc, VAO, scene, glm::vec3(0, 0.02f, 0),
         glm::vec3(0.3f, 0.03f, 0.3f), texWhite);
 
-    // Penalty areas (16.5 x 40.32) and goal areas (5.5 x 18.32).
     for (int side = -1; side <= 1; side += 2) {
         const float penaltyX = side * 36.0f;
         const float goalAreaX = side * 47.0f;
@@ -2073,7 +2026,6 @@ void drawRunningTrack(GLint modelLoc, const glm::mat4& scene, const BallMesh& me
 void drawPerimeter(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     const glm::mat4& scene, GLuint texWall, GLuint texFacade, GLuint texFloor, GLuint texAccent)
 {
-    // Incluye los árboles (|z| <= 57.2) y el recorrido del autobús (x <= 85).
     constexpr float halfLength = 103.0f, halfWidth = 80.0f;
     static_assert(halfLength > 85.0f && halfWidth > 71.2f,
         "El perimetro debe contener el autobus y los arboles");
@@ -2084,7 +2036,6 @@ void drawPerimeter(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
 
     glUniform1i(textureModeLoc, 5);
     for (int side = -1; side <= 1; side += 2) {
-        // Muros de las cabeceras: unen los dos laterales sin cerrar la vista superior.
         float gateCenterZ = -side * 21.0f;
         float gateHalfWidth = 7.0f;
         float lowEnd = gateCenterZ - gateHalfWidth;
@@ -2107,7 +2058,6 @@ void drawPerimeter(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
             glm::vec3(side * halfLength, 5.1f, gateCenterZ),
             glm::vec3(0.9f, 0.35f, gateHalfWidth * 2.0f + 0.9f), texAccent);
 
-        // Laterales con dos vanos alineados con los pasillos entre gradas.
         for (int section = -1; section <= 1; section += 2) {
             float x = section * (halfLength + 2.0f) * 0.5f;
             drawCube(modelLoc, VAO, scene, glm::vec3(x, 2.0f, side * halfWidth),
@@ -2131,14 +2081,13 @@ void drawGoal(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4&
 {
     glUniform1i(textureModeLoc, 7);
     glm::mat4 parent = glm::translate(scene, glm::vec3(x, 0, 0));
-    // Goal posts and crossbar (soccer dimensions: 7.32 x 2.44 m).
+    // Portería: 7.32 x 2.44 m.
     drawCube(modelLoc, VAO, parent, glm::vec3(0, 1.22f, -3.66f),
         glm::vec3(0.13f, 2.44f, 0.13f), texPosts);
     drawCube(modelLoc, VAO, parent, glm::vec3(0, 1.22f, 3.66f),
         glm::vec3(0.13f, 2.44f, 0.13f), texPosts);
     drawCube(modelLoc, VAO, parent, glm::vec3(0, 2.44f, 0),
         glm::vec3(0.13f, 0.13f, 7.32f), texPosts);
-    // Rear frame and simplified net made of thin bars.
     float depth = direction * 1.75f;
     for (int i = 0; i <= 14; ++i) {
         float z = -3.66f + (7.32f / 14.0f) * i;
@@ -2164,7 +2113,7 @@ void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, con
     float kickAngle, float diveAngle, float walkAngle, int jerseyNumber, GLuint numberColor,
     float jumpHeight, float headNod)
 {
-    // Hierarchical modeling: shoulder -> elbow and hip -> knee.
+    // Articulaciones de brazos y piernas.
     glm::mat4 model = glm::translate(scene, position + glm::vec3(0.0f, jumpHeight, 0.0f));
     model = glm::rotate(model, glm::radians(yaw), glm::vec3(0, 1, 0));
     if (std::fabs(diveAngle) > 0.01f) {
@@ -2172,7 +2121,7 @@ void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, con
         model = glm::rotate(model, glm::radians(diveAngle), glm::vec3(0, 0, 1));
         model = glm::translate(model, glm::vec3(0.0f, -0.82f, 0.0f));
     }
-    glm::mat4 modelTemp = model; // Same principle used in the original example.
+    glm::mat4 modelTemp = model;
 
     drawCube(modelLoc, torsoVAO, modelTemp, glm::vec3(0, 1.20f, 0),
         glm::vec3(0.45f, 0.64f, 0.25f), texJersey);
@@ -2196,7 +2145,6 @@ void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, con
         glm::vec3(0.27f, 0.29f, 0.27f), texHead);
 
     for (int side = -1; side <= 1; side += 2) {
-        // Arm: both segments are positioned relative to their joint.
         glm::mat4 shoulder = glm::translate(modelTemp, glm::vec3(side * 0.3f, 1.43f, 0));
         shoulder = glm::rotate(shoulder, glm::radians(-20.0f - side * walkAngle * 0.6f), glm::vec3(1, 0, 0));
         shoulder = glm::rotate(shoulder, glm::radians(side * std::fabs(diveAngle) * 1.1f), glm::vec3(0, 0, 1));
@@ -2205,7 +2153,6 @@ void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, con
         glm::mat4 elbow = glm::translate(shoulder, glm::vec3(0, -0.3f, 0));
         drawCube(modelLoc, VAO, elbow, glm::vec3(0, -0.16f, 0),
             glm::vec3(0.11f, 0.32f, 0.11f), texSkin);
-        // Leg: the knee is a child of the hip joint.
         glm::mat4 hip = glm::translate(modelTemp, glm::vec3(side * 0.13f, 0.90f, 0));
         if (std::fabs(walkAngle) > 0.01f)
             hip = glm::rotate(hip, glm::radians(side * walkAngle), glm::vec3(1, 0, 0));
@@ -2351,14 +2298,13 @@ static glm::vec3 SpherePoint(float theta, float phi)
 
 static void AddVertex(std::vector<GLfloat>& v, glm::vec3 p)
 {
-    // Position (XYZ), normal (XYZ). The original vertex format is unchanged.
+    // Vértices: posición XYZ y normal XYZ.
     v.push_back(p.x); v.push_back(p.y); v.push_back(p.z);
     v.push_back(p.x); v.push_back(p.y); v.push_back(p.z);
 }
 
 static bool IsBlackPatch(glm::vec3 normal)
 {
-    // Approximation of the black pentagons on a soccer ball.
     const float d = 1.61803398875f;
     const glm::vec3 centers[] = {
         {0, 1, d}, {0, -1, d}, {0, 1, -d}, {0, -1, -d},
@@ -2488,7 +2434,7 @@ void drawTrees(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
 
 void drawBird(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
-    GLuint texBird, GLuint texBeak, float elapsed, GLuint texEye)
+    GLuint texBird, GLuint texBeak, float elapsed)
 {
     float orbit = elapsed * 0.24f;
     float x = 58.0f * cosf(orbit);
@@ -2507,18 +2453,6 @@ void drawBird(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4&
         glm::vec3(0.55f, 0.20f, 0.24f), whiteMesh, blackMesh, texBird);
     drawSolidSphere(modelLoc, bird, glm::vec3(0.48f, 0.12f, 0.0f),
         glm::vec3(0.23f, 0.23f, 0.20f), whiteMesh, blackMesh, texBird);
-
-    if (texEye != 0) {
-        glUniform1i(textureModeLoc, 8);
-        for (int side = -1; side <= 1; side += 2) {
-            // Contorno/cuenca orbital oscura
-            drawSolidSphere(modelLoc, bird, glm::vec3(0.58f, 0.20f, side * 0.170f),
-                glm::vec3(0.095f, 0.095f, 0.075f), whiteMesh, blackMesh, texBird);
-            // Globo ocular grande y sobresaliente con textura de ojo y pupila visible
-            drawSolidSphere(modelLoc, bird, glm::vec3(0.58f, 0.20f, side * 0.185f),
-                glm::vec3(0.082f, 0.082f, 0.068f), whiteMesh, blackMesh, texEye);
-        }
-    }
 
     glUniform1i(textureModeLoc, 7);
     drawCube(modelLoc, VAO, bird, glm::vec3(0.72f, 0.07f, 0.0f),
@@ -2649,7 +2583,6 @@ bool loadBusWheelData(const char* filePath)
     return true;
 }
 
-
 glm::vec3 getBroadcastPosition()
 {
     if (activeCamera == 9)
@@ -2663,7 +2596,7 @@ glm::vec3 getBroadcastPosition()
         forward = glm::normalize(forward);
         return dronePosition + forward * 2.0f + glm::vec3(0.0f, -0.72f, 0.0f);
     }
-    if (activeCamera >= 1 && activeCamera <= 6) {
+    if (activeCamera >= 3 && activeCamera <= 8) {
         const glm::vec3& cameraPosition = broadcastCameraPositions[activeCamera - 1];
         glm::vec3 pivot = cameraPosition + cameraModelScale * cameraHeadPivot;
         glm::vec3 forward = trackedBallPosition - pivot;
@@ -2744,7 +2677,7 @@ void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* ca
     glUniform1i(glGetUniformLocation(lightingShader.Program, "useImportedModelTexture"), 1);
     GLint neutralCameraLoc = glGetUniformLocation(lightingShader.Program, "cameraNeutralMaterial");
     glUniform1i(neutralCameraLoc, 1);
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 2; i < 8; ++i) {
         if (activeCamera == i + 1) continue;
         const glm::vec3& position = broadcastCameraPositions[i];
         glm::mat4 baseMatrix = glm::translate(glm::mat4(1.0f), position);
@@ -2769,7 +2702,6 @@ void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* ca
     }
     glUniform1i(neutralCameraLoc, 0);
 }
-
 
 void drawBleachers(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     GLuint texConcrete, GLuint texSideWall, GLuint texWood, GLuint texWalkway, GLuint texMetal)
@@ -2942,6 +2874,8 @@ void drawTrophy(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat
     glm::vec3 position = finalLift ? glm::vec3(0.0f, 0.02f + trophyLiftHeight(), 37.62f)
         : glm::vec3(0.0f, 0.65f, 44.0f);
     glm::mat4 trophy = glm::translate(scene, position);
+    if (!finalLift)
+        trophy = glm::rotate(trophy, glm::radians(elapsed * 32.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     trophy = glm::scale(trophy, glm::vec3(finalLift ? 0.37f : 0.64f));
     drawCube(modelLoc, VAO, trophy, glm::vec3(0.0f, 0.12f, 0.0f),
         glm::vec3(0.95f, 0.24f, 0.95f), texGold);
@@ -2965,7 +2899,6 @@ void drawTrophy(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat
     }
     glUniform1i(textureModeLoc, 0);
 }
-
 
 void drawScoreDigit(GLint modelLoc, GLuint VAO, const glm::mat4& matrix,
     int digit, float x, float y, float z, float width, GLuint texture)
