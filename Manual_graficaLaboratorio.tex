@@ -110,14 +110,26 @@ $\downarrow$\\[-0.1em]
 Archivo o grupo & Responsabilidad\\
 \midrule
 \texttt{main.cpp} & Inicialización, controles, escena, estados de penal, autobús y renderizado.\\
-\texttt{Camera.h}, \texttt{Shader.h} & Transformaciones de vista y carga/compilación de shaders; documentar procedencia exacta de la base docente.\\
-\texttt{Shader/lighting.vs}, \texttt{lighting.frag} & Posición, normales, coordenadas procedurales, luces y muestreo de texturas.\\
-\texttt{Model.h}, \texttt{Mesh.h} & Carga y dibujado de los modelos OBJ importados con Assimp.\\
-\texttt{Models/Textures/} & Mapas de color de césped, concreto, asfalto, troncos, hojas, playera, cabezas y metal de las torres de iluminación.\\
+\texttt{Camera.h}, \texttt{Shader.h} & Transformaciones de vista y carga/compilación de shaders (base docente de las Prácticas 2, 7 y 8).\\
+\texttt{Shader/lighting.vs}, \texttt{lighting.frag} & Shaders de iluminación Phong/Blinn-Phong extendidos desde la Práctica 7 con proyecciones procedurales y múltiples fuentes.\\
+\texttt{Model.h}, \texttt{Mesh.h} & Carga y dibujado de los modelos OBJ importados con Assimp (base de las Prácticas 5 y 8).\\
+\texttt{Models/Textures/} & Mapas de color PBR CC0 y atlas procedurales (césped, concreto, pista, trofeo, porterías, balones, aves, drones y uniformes).\\
 \texttt{Models/Camaras/} & Cámara separada en base/cabezal, materiales e imagen del logo Liga MX.\\
 \bottomrule
 \end{tabular}
 \end{center}
+
+\subsection{Procedencia y correspondencia con el código base docente (Prácticas 1 a 10)}
+El proyecto integra de manera formal la arquitectura docente construida a lo largo de las sesiones de laboratorio de la asignatura:
+\begin{itemize}
+\item \textbf{Práctica 1 (Dibujo 2D e infraestructura):} Inicialización del contexto GLFW, enlaces a funciones OpenGL vía GLEW y ciclo continuo de renderizado con intercambio de búferes (\texttt{glfwSwapBuffers}) y despacho de eventos.
+\item \textbf{Prácticas 2 y 3 (Proyecciones y Modelado geométrico):} Sistema de coordenadas y álgebra lineal con GLM (\texttt{glm::perspective}, \texttt{glm::lookAt}, matrices de transformación) y definición de primitivas volumétricas mediante Vertex Buffer Objects (VBO) y Vertex Array Objects (VAO) para cubos y prismas rectangulares.
+\item \textbf{Práctica 4 (Modelado jerárquico):} Estructuración de transformaciones subordinadas en cascada (\texttt{modelTemp}) para la animación articulada de extremidades superiores e inferiores de jugadores y cuerpo arbitral.
+\item \textbf{Prácticas 5 y 8 (Carga de modelos y Assimp):} Estructuras \texttt{Mesh.h} y \texttt{Model.h} para la lectura de geometría, índices y materiales desde archivos OBJ y MTL externos.
+\item \textbf{Práctica 6 (Texturizado):} Gestión de imágenes mediante \texttt{SOIL2} y \texttt{stb\_image}, configuración de parámetros de muestreo (\texttt{glTexParameteri}), filtros lineales/vecino más cercano y habilitación de atlas de textura en shaders.
+\item \textbf{Prácticas 7 y 8 (Iluminación y Materiales):} Implementación de \texttt{Camera.h} con vectores directores y ángulos de Euler, junto con los shaders \texttt{lighting.vs} y \texttt{lighting.frag} que resuelven el modelo Phong/Blinn-Phong dividiendo la contribución en componentes ambiental, difusa y especular, integrando luz solar direccional, 8 fuentes puntuales y 4 reflectores tipo \emph{spotlight}.
+\item \textbf{Prácticas 9 y 10 (Animaciones y Máquinas de estados):} Dinámicas temporales basadas en máquinas de estados finitos y cuadros clave (\emph{keyframes}) para secuencias complejas (tiros de esquina, remates, celebraciones emotivas del público y sobrevuelo de drones y fauna).
+\end{itemize}
 El programa genera también texturas de un píxel para los elementos de color sólido. La playera del tirador usa un atlas original azul marino y dorado (frente y espalda), con UV explícitas en un VAO de torso independiente; el cubo compartido permanece intacto. En el shader, la ruta de cámara conserva los colores importados; los mapas procedurales de la escena son de color, sin relieve geométrico. \textbf{Pendiente:} inventariar licencias, créditos, referencias visuales y relación exacta de estos archivos con el código del profesor.
 Las torres de iluminación usan el mapa difuso 1K \emph{Worn Shutter} de Poly Haven (Dimitrios Savva, CC0: \url{https://polyhaven.com/a/worn_shutter}); los paneles luminosos siguen separados.
 Las cabezas del tirador y el portero comparten un atlas pixel art de seis caras con UV explícitas y filtrado por vecino más cercano. El generador \texttt{generate\_player\_head.py} incluye otras expresiones, pero la escena usa únicamente el atlas neutral; no se animan los rostros.
