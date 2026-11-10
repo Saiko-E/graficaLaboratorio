@@ -24,8 +24,7 @@ __pycache__/
 !Configinicial/Models/
 !Configinicial/Models/**/*.obj
 
-# Archivos de chui inutiles
-build.sh
+# Ejecutable local de Linux
 graficaLaboratorio
 
 #Archivos de compilacion de latex

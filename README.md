@@ -1,6 +1,35 @@
-# graficaLaboratorio
+# Estadio de fútbol en OpenGL 3.3 — Pumas vs Atlante
 
-Proyecto final de Computación Gráfica: estadio de fútbol en OpenGL.
+Proyecto final del Laboratorio de Computación Gráfica (UNAM). Recrea un estadio
+nocturno interactivo con cancha, pista, gradas, fachada, público, autobuses,
+cámaras, drones y una secuencia de partido: llegada, saque, goles, penales y
+celebración con fuegos artificiales. Está desarrollado en C++ y OpenGL 3.3.
+
+![Vista general del estadio con cancha, gradas y torres de iluminación](figuras/estadio_general.png)
+
+| Vista del estadio | Secuencia del partido |
+| --- | --- |
+| ![Fachada y accesos del estadio](figuras/fachada.png) | ![Escena del tiro penal](figuras/penal.png) |
+
+## Cómo ejecutar en Linux
+
+Necesitas una tarjeta gráfica y controladores con **OpenGL 3.3** o superior. En
+Ubuntu/Debian, desde la raíz del repositorio instala el compilador y las
+bibliotecas necesarias y compila:
+
+```bash
+sudo apt update
+sudo apt install build-essential pkg-config libglfw3-dev libglew-dev libglm-dev libassimp-dev
+cd Configinicial
+./build.sh
+./graficaLaboratorio
+```
+
+`build.sh` compila SOIL2 (incluido en el proyecto) y genera el ejecutable Linux
+`Configinicial/graficaLaboratorio`; **no ejecuta el `.exe` de Windows**. Ejecuta
+el programa desde `Configinicial/`: `Shader/` y `Models/` se cargan con rutas
+relativas. Para volver a abrirlo después de compilar: `cd Configinicial &&
+./graficaLaboratorio` desde la raíz del repositorio.
 
 ## Cómo ejecutar en Windows
 
@@ -31,11 +60,12 @@ Abre PowerShell en la carpeta raíz del proyecto (la que contiene este `README.m
 
 | Tecla | Acción |
 | --- | --- |
-| `1` a `8` | Cambiar entre las cámaras del estadio. |
-| `9` | Ver el estadio desde el exterior. |
+| `1` y `2` | Vistas de los drones. |
+| `3` a `8` | Cámaras fijas de transmisión. |
+| `9` | Vista aérea cenital del estadio. |
 | `0` | Activar la cámara libre. |
 | `W`, `A`, `S`, `D` y ratón | Mover y orientar la cámara libre. |
-| `Espacio` | Iniciar o pausar la secuencia. |
+| `Espacio` | Desde el inicio reproduce toda la secuencia; después la pausa o reanuda. |
 | `L` | Reiniciar la secuencia automática. |
 | `N` | Ir a la tanda de penales. |
 | `P` | Tirar un penal. |
@@ -52,9 +82,12 @@ Copia o comprime **toda la carpeta `dist\graficaLaboratorio`** y extráela en el
 - **No aparecen modelos o texturas, o hay errores al cargar shaders:** comprueba que las carpetas `Models` y `Shader` conserven su contenido y estén junto al `.exe`.
 - **No se abre la ventana o aparece un error de OpenGL:** actualiza los controladores de la tarjeta gráfica y verifica que el equipo soporte OpenGL 3.3.
 - **La cámara no se mueve:** pulsa `0` para activar la cámara libre antes de usar `W/A/S/D` y el ratón.
+- **Linux: no compila o faltan bibliotecas:** instala los paquetes indicados arriba y ejecuta `./build.sh` desde `Configinicial/`.
 
 ## Código fuente
 
-El código fuente está en `Configinicial/`. Consulta [requisitos y pendientes](PENDIENTES_PROYECTO.md) para el estado de la entrega.
+El código fuente está en `Configinicial/`. Para todos los controles y la
+descripción técnica, consulta el [manual de usuario y técnico](Manual_graficaLaboratorio.pdf).
+Consulta [requisitos y pendientes](PENDIENTES_PROYECTO.md) para el estado de la entrega.
 
 **Nota sobre la compilación:** el script `build-windows.ps1` mencionado en [EJECUTABLE.md](EJECUTABLE.md) no está incluido en este repositorio. Las instrucciones anteriores utilizan el ejecutable ya generado en `dist\graficaLaboratorio`.

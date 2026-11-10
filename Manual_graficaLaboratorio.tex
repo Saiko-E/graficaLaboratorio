@@ -41,7 +41,6 @@
 \sloppy
 \hypersetup{pageanchor=false}
 
-%============================================================ PORTADA
 \begin{titlepage}
 \centering
 \begin{minipage}{0.42\textwidth}\centering
@@ -76,7 +75,6 @@ Recreación 3D interactiva en OpenGL\par}
 {\small Ciudad Universitaria, Ciudad de México\par}
 \end{titlepage}
 
-%============================================================ ÍNDICE
 \hypersetup{pageanchor=true}
 \pagenumbering{roman}
 \tableofcontents
@@ -95,7 +93,7 @@ esa base se programó una secuencia de partido con máquina de estados (llegada,
 penales y final), cinco animaciones por código y un sistema de cámaras interactivo. El manual de
 usuario explica la instalación, los controles y un recorrido de demostración; el manual técnico
 documenta objetivos, alcance, limitantes, metodología, arquitectura, diagrama de flujo, cronograma,
-materiales, pruebas y conclusiones.
+materiales y pruebas.
 
 \part{Manual de usuario}
 
@@ -114,27 +112,40 @@ condiciones de victoria jugables. Su propósito es exhibir el pipeline gráfico 
 \section{Requisitos e instalación}
 \subsection{Requisitos}
 \begin{itemize}
-  \item Sistema operativo Linux con controladores OpenGL 3.3 Core Profile o superior.
-  \item Compilador de C++ con soporte para C++11 (\texttt{g++}).
-  \item Bibliotecas GLFW 3, GLEW, GLM y Assimp, además de \texttt{pkg-config}.
+  \item Windows de 64 bits o Linux; controladores compatibles con OpenGL 3.3 Core Profile o superior.
+  \item En Linux, compilador de C++ con soporte para C++11 (\texttt{g++}), GLFW 3, GLEW,
+        GLM, Assimp y \texttt{pkg-config}. En Windows, usar la carpeta distribuida con el
+        ejecutable y sus DLL; no se requiere compilador para ejecutarlo.
   \item Una GPU capaz de sostener la resolución del monitor a una tasa aceptable. La escena usa ocho luces
         puntuales, cuatro reflectores y sombreado por fragmento.
 \end{itemize}
 
-\subsection{Compilación y ejecución}
-El proyecto incluye \texttt{Configinicial/build.sh}, que compila la biblioteca SOIL2 incluida y
-enlaza el ejecutable sin depender de los archivos de Visual Studio. En Ubuntu o Debian, las
-dependencias se instalan con:
+\subsection{Ejecución en Windows}
+Descargar el repositorio y extraerlo si se obtuvo como ZIP. Abrir
+\texttt{dist/graficaLaboratorio/} y hacer doble clic en
+\texttt{graficaLaboratorio.exe}. Como alternativa, desde la raíz del repositorio en PowerShell:
 \begin{lstlisting}
+.\dist\graficaLaboratorio\graficaLaboratorio.exe
+\end{lstlisting}
+No separar el ejecutable de las DLL ni de las carpetas \texttt{Models/} y
+\texttt{Shader/} incluidas en la misma carpeta de distribución. En Windows, el
+programa establece automáticamente esa carpeta como directorio de trabajo al abrirse.
+
+\subsection{Compilación y ejecución en Linux}
+El archivo \texttt{Configinicial/build.sh} compila la biblioteca SOIL2 incluida y
+genera un ejecutable nativo de Linux (no el \texttt{.exe} de Windows). En Ubuntu o
+Debian, desde la raíz del repositorio, ejecutar:
+\begin{lstlisting}
+sudo apt update
 sudo apt install build-essential pkg-config libglfw3-dev libglew-dev libglm-dev libassimp-dev
 cd Configinicial
 ./build.sh
 ./graficaLaboratorio
 \end{lstlisting}
-El ejecutable debe lanzarse desde la carpeta \texttt{Configinicial/}, porque todas las rutas de
-shaders, texturas y modelos son relativas (\texttt{Shader/}, \texttt{Models/}). Si se ejecuta desde
-otra carpeta, el programa arranca pero reporta recursos faltantes y sustituye algunas texturas por
-colores planos.
+En ejecuciones posteriores basta con entrar en \texttt{Configinicial/} y ejecutar
+\texttt{./graficaLaboratorio}. Debe iniciarse desde esa carpeta porque los shaders,
+las texturas y los modelos se buscan mediante rutas relativas (\texttt{Shader/},
+\texttt{Models/}); desde otra ubicación pueden faltar recursos.
 
 \section{Controles}
 La ventana abre a la resolución del monitor y el título muestra el marcador, el tiempo, la escena
@@ -167,7 +178,7 @@ Ratón & Gira la cámara libre (yaw y pitch). & Cámara 0\\
 \texttt{9} & Vista aérea cenital; en la final apunta al trofeo. & Siempre\\
 \texttt{Z} & Inicia la llegada de los autobuses. & Desde el estado inicial\\
 \texttt{L} & Reinicia y reproduce la secuencia completa automática. & Siempre\\
-\texttt{Espacio} & Inicia la secuencia automática si está detenida; en otro caso pausa o reanuda. & Siempre\\
+\texttt{Espacio} & Desde el estado inicial reproduce toda la secuencia automáticamente (llegada, saque, dos goles, penales y final); durante la secuencia la pausa o reanuda. & Siempre\\
 \texttt{X} & Salta al saque inicial. & Siempre\\
 \texttt{C} & Salta al gol de Pumas. & Siempre\\
 \texttt{V} & Salta al gol de Atlante. & Siempre\\
@@ -204,10 +215,14 @@ Final & \texttt{M} & El capitán levanta el trofeo, el público celebra y se lan
 \caption{Escenas y teclas de acceso.}\label{tab:escenas}
 \end{table}
 
-Con \texttt{L}, o con \texttt{Espacio} desde el estado inicial, la secuencia avanza sola: llegada,
-saque, gol de Pumas, gol de Atlante, penales y final. En los penales automáticos el programa dispara
-cada intento y decide al ganador. Si se entra con \texttt{N}, la secuencia no es automática y cada
-tiro debe ordenarse con \texttt{P}; esto permite explicar la animación paso a paso.
+Para reproducir el partido completo, desde el estado inicial pulse \texttt{Espacio}: el programa
+inicia automáticamente la llegada de los autobuses, el saque, el gol de Pumas, el gol de Atlante,
+la tanda de penales y la ceremonia final con fuegos artificiales. Durante el recorrido, otra
+pulsación de \texttt{Espacio} pausa la secuencia y la siguiente la reanuda; no la reinicia.
+\texttt{L} sí reinicia y reproduce la secuencia completa desde cualquier escena. En los penales
+automáticos el programa dispara cada intento y decide al ganador. Si se entra con \texttt{N}, la
+secuencia no es automática y cada tiro debe ordenarse con \texttt{P}; esto permite explicar la
+animación paso a paso.
 
 \begin{figure}[H]
 \centering
@@ -232,7 +247,7 @@ El siguiente recorrido cubre los requisitos de la entrega en menos de cinco minu
         ratón (figura~\ref{fig:fachada}).
   \item Volver a una vista fija con \texttt{5} y pulsar \texttt{Z} para la llegada. Encender los
         faros con \texttt{H} (figura~\ref{fig:autobuses}).
-  \item Pulsar \texttt{L} para reproducir la secuencia completa. Dejar que se vean el saque, los dos
+  \item Pulsar \texttt{R} y después \texttt{Espacio} para reproducir la secuencia completa desde el inicio. Dejar que se vean el saque, los dos
         goles y el festejo del público (figuras~\ref{fig:publico} y~\ref{fig:arbitro}).
   \item En los penales, si se desea control manual, pulsar \texttt{N} y luego \texttt{P} para cada
         tiro (figura~\ref{fig:penal}).
@@ -317,7 +332,7 @@ tiempo real.
   \item Programar al menos cinco animaciones: tres sencillas y dos complejas.
   \item Implementar una secuencia de partido coherente con el tema, con transiciones y estados.
   \item Documentar el uso del programa, la arquitectura, el flujo, el cronograma, el alcance, las
-        limitantes, las pruebas y las conclusiones.
+        limitantes y las pruebas.
 \end{itemize}
 
 \section{Alcance}
@@ -395,7 +410,7 @@ Se siguió un desarrollo incremental con control de versiones Git y ramas por ap
         fuegos artificiales.
   \item \textbf{Verificación.} Compilación con \texttt{build.sh} y quince scripts de comprobación en
         \texttt{Configinicial/tests/}.
-  \item \textbf{Documentación.} Este manual, el archivo de pendientes y los comentarios del código.
+  \item \textbf{Documentación.} Este manual y el archivo de pendientes.
 \end{enumerate}
 El historial de Git se usó como registro real de avances: primer commit el 28 de octubre de 2026,
 base avanzada el 5 de noviembre, texturas y escena el 7 y 8 de noviembre, y animaciones finales el
@@ -447,7 +462,6 @@ if (!sequencePaused) {
 }
 view = getBroadcastView();
 projection = glm::perspective(glm::radians(fov), aspect, 0.1f, 300.0f);
-// cielo, escena, HUD y swap buffers
 \end{lstlisting}
 
 \section{Diagrama de flujo del software}
@@ -789,48 +803,5 @@ compartido en la unidad 1. Los modelos importados usan sus propios materiales y 
 por código usa los modos procedurales de la tabla~\ref{tab:modos}. Cuando una imagen no se
 encuentra, \texttt{LoadDiffuseTexture} devuelve 0 y el programa usa
 \texttt{CreateSolidColorTexture} para no dejar la cara sin material.
-
-\section{Conclusiones}
-\subsection{Erick Nava Santiago}
-El proyecto permitió integrar en un solo programa los temas del curso: contexto OpenGL, cámara,
-transformaciones, carga de modelos con Assimp, texturizado, iluminación y máquinas de estados. La
-parte más demandante fue mantener coherentes la secuencia de partido, las trayectorias del balón y
-las cámaras que lo siguen, porque cualquier cambio de tiempo afecta varias escenas. La compilación
-reproducible con \texttt{build.sh} y los scripts de verificación redujeron el riesgo de romper
-recursos al integrar ramas. Queda como trabajo futuro el texturizado con UV modelados y una
-distribución de cámaras más cinematográfica.
-
-\subsection{Jesús Alejandro Tenorio Martínez}
-La aportación se centró en los materiales y en la vida de la escena: texturas de cancha, pista,
-gradas, árboles, público, árbitro y reacciones. El reto principal fue que la geometría por código no
-tiene UV, así que fue necesario proyectar las texturas desde la posición o la normal y aceptar sus
-limitaciones. Los atlas de rostro y las playeras generadas por script facilitaron variar a los
-personajes sin modelar cada cara. La experiencia confirma que el texturizado y la iluminación
-importan tanto como la geometría para que una escena se lea como un estadio y no como un conjunto de
-cubos.
-
-\subsection{Conclusión general}
-El sistema cumple los objetivos planteados: recrea un espacio reconocible con más de siete tipos de
-objetos texturizados, conserva y extiende la base docente, incluye cinco animaciones por código y
-ofrece una interacción suficiente para recorrer y demostrar la escena. Las limitantes documentadas
-—texturizado procedural, cámaras fijas y ausencia de sombras— no impiden la demostración, pero
-marcan el camino para una siguiente versión.
-
-\section*{Referencias}
-\addcontentsline{toc}{section}{Referencias}
-\begin{enumerate}[label={[\arabic*]}]
-  \item Espinoza Urzúa, E. \emph{Proyecto Final. Laboratorio de Computación Gráfica}. Facultad de
-        Ingeniería, UNAM, 2026. Documento de la asignatura.
-  \item Khronos Group. \emph{OpenGL 3.3 Core Profile Specification}. \url{https://www.opengl.org/}.
-  \item GLFW. \emph{Window and input library}. \url{https://www.glfw.org/}.
-  \item Assimp. \emph{Open Asset Import Library}. \url{https://assimp.org/}.
-  \item G-Truc. \emph{OpenGL Mathematics (GLM)}. \url{https://glm.g-truc.net/}.
-  \item ambientCG. \emph{Grass005, LeafSet024, Gravel Concrete 03}. Licencia CC0.
-        \url{https://ambientcg.com/}.
-  \item Poly Haven. \emph{Pine Bark, Old Wooden Floor 02, Metal Plate, Marble, Trophy Gold}.
-        Licencia CC0. \url{https://polyhaven.com/}.
-  \item Documentación del código base de las prácticas P1--P10 del Laboratorio de Computación
-        Gráfica, Facultad de Ingeniería, UNAM.
-\end{enumerate}
 
 \end{document}
