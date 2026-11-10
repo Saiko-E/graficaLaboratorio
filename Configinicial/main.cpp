@@ -31,43 +31,68 @@
 #include "SOIL2/SOIL2.h"
 
 struct BallMesh;
+// Procesa las teclas presionadas.
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
+// Controla el movimiento de la camara con el mouse.
 void MouseCallback(GLFWwindow* window, double xPos, double yPos);
+// Actualiza el movimiento de la camara.
 void DoMovement();
+// Actualiza la animacion del tiro penal.
 void Animation();
+// Actualiza el recorrido de los autobuses.
 void updateBusAnimation();
+// Prepara una nueva escena del partido.
 void beginMatchScene(int scene, bool automatic);
+// Solicita cambiar a otra escena.
 void requestMatchScene(int scene);
+// Reinicia los datos del partido.
 void resetMatch();
+// Actualiza el tiempo, marcador y jugadas del partido.
 void updateMatch(float step);
+// Actualiza la transicion entre escenas.
 void updateFade(float step);
+// Dibuja el marcador y los resultados de penales.
 void drawMatchScoreboard(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint dark, GLuint white, GLuint gold, GLuint red, GLuint green, GLuint pending);
+// Dibuja un numero en el marcador.
 void drawScoreDigit(GLint modelLoc, GLuint VAO, const glm::mat4& matrix,
     int digit, float x, float y, float z, float width, GLuint texture);
+// Crea el efecto visual para cambiar de escena.
 GLuint createFadeProgram();
+// Dibuja la capa de transicion en pantalla.
 void drawFadeOverlay(GLuint program, GLuint vao);
+// Lee las posiciones y tamanos de las ruedas.
 bool loadBusWheelData(const char* filePath);
 
+// Crea una textura de un solo color.
 GLuint CreateSolidColorTexture(GLubyte r, GLubyte g, GLubyte b);
+// Carga una textura desde un archivo.
 GLuint LoadDiffuseTexture(const char* path);
+// Comprueba las texturas asociadas a un modelo.
 void VerifyModelTextures(const std::string& modelPath);
+// Dibuja un cubo con posicion, tamano y textura.
 void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent, glm::vec3 position, glm::vec3 size, GLuint texture, float yaw = 0.0f);
+// Dibuja la cancha y sus lineas.
 void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene, GLuint texGrass, GLuint texWhite);
+// Dibuja los limites y alrededores del estadio.
 void drawPerimeter(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     const glm::mat4& scene, GLuint texWall, GLuint texFacade, GLuint texFloor, GLuint texAccent);
+// Dibuja una porteria.
 void drawGoal(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene, float x, float direction, GLuint texPosts, GLuint texNet);
+// Dibuja un jugador y sus movimientos.
 void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, const glm::mat4& scene,
     glm::vec3 position, float yaw, GLuint texJersey, GLuint texHead,
     GLuint texShorts, GLuint texSkin, GLuint texShoes,
     float kickAngle = 0.0f, float diveAngle = 0.0f, float walkAngle = 0.0f,
     int jerseyNumber = 0, GLuint numberColor = 0,
     float jumpHeight = 0.0f, float headNod = 0.0f);
+// Dibuja la atajada del portero.
 void drawGoalkeeperSave(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO,
     const glm::mat4& scene, glm::vec3 position, float yaw,
     GLuint jersey, GLuint face, GLuint shorts, GLuint skin, GLuint shoes,
     GLuint glove, GLuint numberColor, int number, float progress, int direction);
+// Dibuja la celebracion del capitan.
 void drawCelebrationCaptain(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, const glm::mat4& scene,
     glm::vec3 position, float yaw, GLuint texJersey, GLuint texHead,
     GLuint texShorts, GLuint texSkin, GLuint texShoes, int jerseyNumber, GLuint numberColor);
@@ -77,44 +102,65 @@ struct BallMesh {
     GLsizei vertexCount = 0;
 };
 
+// Crea las partes blancas y negras del balon.
 void createBall(BallMesh& whiteMesh, BallMesh& blackMesh);
+// Genera la geometria de la pista alrededor del campo.
 void createRunningTrack(BallMesh& mesh);
+// Dibuja la pista del estadio.
 void drawRunningTrack(GLint modelLoc, const glm::mat4& scene, const BallMesh& mesh, GLuint texture);
+// Dibuja el balon en su posicion actual.
 void drawBall(GLint modelLoc, GLint textureModeLoc, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texWhite, GLuint texBlack, float rotation, glm::vec3 position);
+// Libera los recursos del balon.
 void deleteBallMesh(BallMesh& mesh);
+// Dibuja una esfera con una textura.
 void drawSolidSphere(GLint modelLoc, const glm::mat4& parent, glm::vec3 position,
     glm::vec3 size, const BallMesh& whiteMesh, const BallMesh& blackMesh, GLuint texture);
+// Dibuja los arboles alrededor del estadio.
 void drawTrees(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texBark, GLuint texLeavesDark, GLuint texLeavesLight);
+// Dibuja un pajaro en movimiento.
 void drawBird(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texBird, GLuint texBeak, float elapsed);
+// Dibuja los fuegos artificiales.
 void drawFireworks(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     float elapsed, GLuint texGold, GLuint texBlue, GLuint texRed, GLuint texWhite);
+// Dibuja las torres de iluminacion.
 void drawFloodlightTowers(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     const glm::mat4& scene, GLuint texMetal);
+// Dibuja los paneles de las luces.
 void drawFloodlightPanels(GLint modelLoc, GLuint VAO);
+// Dibuja las camaras que siguen la accion.
 void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* cameraBase, Model* cameraHead);
+// Dibuja las gradas del estadio.
 void drawBleachers(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     GLuint texConcrete, GLuint texSideWall, GLuint texWood, GLuint texWalkway, GLuint texMetal);
+// Dibuja al publico en las gradas.
 void drawCrowd(GLint modelLoc, GLuint VAO, GLuint jerseyVAO, GLuint headVAO,
     const glm::mat4& scene, GLuint texPumas, GLuint texAtlante,
     GLuint texHead, const GLuint crowdHeads[4], GLuint texPumasShorts, GLuint texAtlanteShorts,
     GLuint texHeadJoy = 0, GLuint texHeadAngry = 0, GLuint texHeadSad = 0, GLuint texHeadSurprise = 0);
+// Indica que aficion debe celebrar.
 int crowdCelebratingSide();
+// Dibuja el dron y sus helices.
 void drawDrone(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     glm::vec3 position, glm::vec3 target, float elapsed,
     GLuint texBody, GLuint texBlades, GLuint texMetal, GLuint texLens);
+// Dibuja el trofeo del partido.
 void drawTrophy(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     float elapsed, GLuint texGold, GLuint texBase, GLuint texWhite);
+// Calcula la vista de la camara.
 glm::mat4 getBroadcastView();
+// Obtiene la posicion de la camara seleccionada.
 glm::vec3 getBroadcastPosition();
+// Reinicia el estado de un penal.
 void ResetPenalty();
+// Genera un numero aleatorio dentro de un rango.
 float RandomFloat(float minValue, float maxValue);
 
 const GLuint WIDTH = 1280, HEIGHT = 720;
@@ -258,6 +304,7 @@ const float pumasCornerKickTime = 0.55f;
 const float pumasShotTime = 4.3f;
 
 const glm::vec3 busPivot(0.36695f, 0.0f, 3.16461f);
+// Calcula la posicion, giro y escala del autobus.
 glm::mat4 getBusModelMatrix(const TeamBus& bus)
 {
     glm::mat4 matrix(1.0f);
@@ -267,24 +314,28 @@ glm::mat4 getBusModelMatrix(const TeamBus& bus)
     return glm::translate(matrix, -busPivot);
 }
 
+// Obtiene la posicion de un faro del autobus.
 glm::vec3 getBusHeadlightPosition(const TeamBus& bus, int index)
 {
     glm::vec3 local(index == 0 ? -0.14f : 0.87f, 1.95f, 6.75f);
     return glm::vec3(getBusModelMatrix(bus) * glm::vec4(local, 1.0f));
 }
 
+// Define donde bajan los jugadores del autobus.
 glm::vec3 getPlayerExitPosition(int team)
 {
     float sign = team == 0 ? 1.0f : -1.0f;
     return glm::vec3(sign * 64.8f, 0.0f, -sign * 10.2f);
 }
 
+// Define el lugar de cada jugador en la formacion.
 glm::vec3 getPlayerLineupPosition(int team, int player)
 {
     float sign = team == 0 ? 1.0f : -1.0f;
     return glm::vec3(sign * 59.0f, 0.0f, -26.0f + 5.2f * player);
 }
 
+// Calcula hacia donde debe mirar la camara antes del partido.
 glm::vec3 getPreMatchFocusTargetForTeam(int team)
 {
     glm::vec3 busTarget = teamBuses[team].position + glm::vec3(0.0f, 2.1f, 0.0f);
@@ -312,6 +363,7 @@ glm::vec3 getPreMatchFocusTargetForTeam(int team)
     return busTarget;
 }
 
+// Selecciona el punto que seguira la camara.
 glm::vec3 getPreMatchFocusTarget()
 {
     if (!arrivalStarted)
@@ -350,6 +402,7 @@ int penaltyGoals[2] = { 0, 0 };
 const int penaltyHistoryLimit = 64;
 int penaltyHistory[2][penaltyHistoryLimit] = {};
 
+// Revisa si ya hay un ganador en los penales.
 int decidePenaltyWinner(const int taken[2], const int scored[2])
 {
     const int limit = 5;
@@ -365,6 +418,7 @@ int decidePenaltyWinner(const int taken[2], const int scored[2])
     return -1;
 }
 
+// Cuenta los penales anotados por un equipo.
 int countPenaltyGoals(int team)
 {
     int total = 0;
@@ -380,12 +434,14 @@ bool penaltyShotRecorded = false;
 float penaltyRestTime = 0.0f;
 const float transitionDuration = 1.15f;
 const glm::vec3 trophyFocusPosition(0.0f, 2.10f, 37.62f);
+// Calcula cuanto se eleva el trofeo.
 float trophyLiftHeight()
 {
     float t = glm::clamp((sceneTime - 1.15f) / 2.75f, 0.0f, 1.0f);
     return 1.72f * t * t * (3.0f - 2.0f * t);
 }
 
+// Devuelve el nombre de la escena actual.
 const char* getSceneLabel()
 {
     switch (matchScene) {
@@ -399,6 +455,7 @@ const char* getSceneLabel()
     }
 }
 
+// Indica que aficion debe celebrar.
 int crowdCelebratingSide()
 {
     if (matchScene == SCENE_PUMAS_GOAL && sceneTime >= 5.35f) return -1;
@@ -413,12 +470,14 @@ int crowdCelebratingSide()
     return 0;
 }
 
+// Comprueba si terminaron de salir los jugadores.
 bool isLineupComplete()
 {
     float endTime = (playersPerTeam - 1) * playerExitDelay + playerWalkDuration;
     return arrivalStarted && teamLineupTime[0] >= endTime && teamLineupTime[1] >= endTime;
 }
 
+// Inicia la llegada de los autobuses.
 void startArrival()
 {
     if (!busAssetsReady) {
@@ -445,12 +504,14 @@ void startArrival()
     std::cout << "Team arrival started." << std::endl;
 }
 
+// Suaviza el movimiento de las animaciones.
 float smoothMatchStep(float t)
 {
     t = glm::clamp(t, 0.0f, 1.0f);
     return t * t * (3.0f - 2.0f * t);
 }
 
+// Calcula la altura de un salto para rematar.
 float headerJump(float time, float contact, float halfWindow, float height)
 {
     float distance = std::fabs(time - contact);
@@ -458,6 +519,7 @@ float headerJump(float time, float contact, float halfWindow, float height)
     return height * 0.5f * (1.0f + std::cos(busPi * distance / halfWindow));
 }
 
+// Calcula la posicion de un jugador durante cada jugada.
 glm::vec3 getMatchPlayerPosition(int team, int player, float time)
 {
     float side = team == 0 ? 1.0f : -1.0f;
@@ -541,6 +603,7 @@ glm::vec3 getMatchPlayerPosition(int team, int player, float time)
     return place;
 }
 
+// Calcula el giro del jugador hacia el balon.
 float yawTowardBall(glm::vec3 player, glm::vec3 ball, float fallback)
 {
     glm::vec2 d(ball.x - player.x, ball.z - player.z);
@@ -552,6 +615,7 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 float animationClock = 0.0f;
 
+// Inicializa la ventana, los modelos y la escena principal.
 int main()
 {
 #ifdef _WIN32
@@ -1345,6 +1409,7 @@ int main()
     return 0;
 }
 
+// Actualiza el movimiento de la camara.
 void DoMovement()
 {
     if (activeCamera == 1 || activeCamera == 2) {
@@ -1385,6 +1450,7 @@ void DoMovement()
 
 }
 
+// Procesa las teclas presionadas.
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -1466,6 +1532,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
     }
 }
 
+// Reinicia los datos del partido.
 void resetMatch()
 {
     matchScene = SCENE_IDLE;
@@ -1504,6 +1571,7 @@ void resetMatch()
     goals = saves = misses = 0;
 }
 
+// Prepara una nueva escena del partido.
 void beginMatchScene(int next, bool automatic)
 {
     matchScene = static_cast<MatchScene>(next);
@@ -1558,6 +1626,7 @@ void beginMatchScene(int next, bool automatic)
     }
 }
 
+// Solicita cambiar a otra escena.
 void requestMatchScene(int next)
 {
     if (matchScene == SCENE_IDLE && fadePhase == FADE_NONE) {
@@ -1568,6 +1637,7 @@ void requestMatchScene(int next)
     fadePhase = FADE_OUT;
 }
 
+// Actualiza la transicion entre escenas.
 void updateFade(float step)
 {
     if (fadePhase == FADE_OUT) {
@@ -1584,6 +1654,7 @@ void updateFade(float step)
     }
 }
 
+// Actualiza el tiempo, marcador y jugadas del partido.
 void updateMatch(float step)
 {
     if (matchScene == SCENE_IDLE || fadePhase == FADE_OUT) return;
@@ -1693,12 +1764,14 @@ void updateMatch(float step)
     }
 }
 
+// Genera un numero aleatorio dentro de un rango.
 float RandomFloat(float minValue, float maxValue)
 {
     return minValue + (maxValue - minValue) *
         (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
 }
 
+// Reinicia el estado de un penal.
 void ResetPenalty()
 {
     penaltyState = READY;
@@ -1718,6 +1791,7 @@ void ResetPenalty()
     penaltyResult = "READY";
 }
 
+// Actualiza la animacion del tiro penal.
 void Animation()
 {
     if (penaltyRequested) {
@@ -1802,6 +1876,7 @@ void Animation()
     }
 }
 
+// Controla el movimiento de la camara con el mouse.
 void MouseCallback(GLFWwindow* window, double xPos, double yPos)
 {
     if (activeCamera != 0) {
@@ -1824,6 +1899,7 @@ void MouseCallback(GLFWwindow* window, double xPos, double yPos)
     camera.ProcessMouseMovement(xOffset, yOffset);
 }
 
+// Crea una textura de un solo color.
 GLuint CreateSolidColorTexture(GLubyte r, GLubyte g, GLubyte b)
 {
     GLuint texture;
@@ -1842,6 +1918,7 @@ GLuint CreateSolidColorTexture(GLubyte r, GLubyte g, GLubyte b)
     return texture;
 }
 
+// Carga una textura desde un archivo.
 GLuint LoadDiffuseTexture(const char* path)
 {
     int width, height;
@@ -1865,6 +1942,7 @@ GLuint LoadDiffuseTexture(const char* path)
     return texture;
 }
 
+// Comprueba las texturas asociadas a un modelo.
 void VerifyModelTextures(const std::string& modelPath)
 {
     std::ifstream objFile(modelPath.c_str());
@@ -1907,6 +1985,7 @@ void VerifyModelTextures(const std::string& modelPath)
     if (!foundUV) std::cerr << "OBJ without UV coordinates (vt): " << modelPath << std::endl;
 }
 
+// Dibuja un cubo con posicion, tamano y textura.
 void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent,
     glm::vec3 position, glm::vec3 size, GLuint texture, float yaw)
 {
@@ -1921,6 +2000,7 @@ void drawCube(GLint modelLoc, GLuint VAO, const glm::mat4& parent,
     glBindVertexArray(0);
 }
 
+// Dibuja la cancha y sus lineas.
 void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     GLuint texGrass, GLuint texWhite)
 {
@@ -1975,6 +2055,7 @@ void drawField(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
     }
 }
 
+// Genera la geometria de la pista alrededor del campo.
 void createRunningTrack(BallMesh& mesh)
 {
     constexpr float halfLength = 52.5f, halfWidth = 34.0f;
@@ -2039,6 +2120,7 @@ void createRunningTrack(BallMesh& mesh)
     glBindVertexArray(0);
 }
 
+// Dibuja la pista del estadio.
 void drawRunningTrack(GLint modelLoc, const glm::mat4& scene, const BallMesh& mesh, GLuint texture)
 {
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(scene));
@@ -2049,6 +2131,7 @@ void drawRunningTrack(GLint modelLoc, const glm::mat4& scene, const BallMesh& me
     glBindVertexArray(0);
 }
 
+// Dibuja los limites y alrededores del estadio.
 void drawPerimeter(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     const glm::mat4& scene, GLuint texWall, GLuint texFacade, GLuint texFloor, GLuint texAccent)
 {
@@ -2102,6 +2185,7 @@ void drawPerimeter(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     glUniform1i(textureModeLoc, 0);
 }
 
+// Dibuja una porteria.
 void drawGoal(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     float x, float direction, GLuint texPosts, GLuint texNet)
 {
@@ -2133,6 +2217,7 @@ void drawGoal(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4&
     glUniform1i(textureModeLoc, 0);
 }
 
+// Dibuja un jugador y sus movimientos.
 void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, const glm::mat4& scene,
     glm::vec3 position, float yaw, GLuint texJersey, GLuint texHead,
     GLuint texShorts, GLuint texSkin, GLuint texShoes,
@@ -2194,6 +2279,7 @@ void drawPlayer(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, con
     }
 }
 
+// Dibuja la atajada del portero.
 void drawGoalkeeperSave(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO,
     const glm::mat4& scene, glm::vec3 position, float yaw,
     GLuint jersey, GLuint face, GLuint shorts, GLuint skin, GLuint shoes,
@@ -2256,6 +2342,7 @@ void drawGoalkeeperSave(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint head
     }
 }
 
+// Dibuja la celebracion del capitan.
 void drawCelebrationCaptain(GLint modelLoc, GLuint VAO, GLuint torsoVAO, GLuint headVAO, const glm::mat4& scene,
     glm::vec3 position, float yaw, GLuint texJersey, GLuint texHead,
     GLuint texShorts, GLuint texSkin, GLuint texShoes, int jerseyNumber, GLuint numberColor)
@@ -2370,6 +2457,7 @@ static void CreateBallMesh(BallMesh& mesh, const std::vector<GLfloat>& vertexDat
     glBindVertexArray(0);
 }
 
+// Crea las partes blancas y negras del balon.
 void createBall(BallMesh& whiteMesh, BallMesh& blackMesh)
 {
     const float PI = 3.14159265358979323846f;
@@ -2393,6 +2481,7 @@ void createBall(BallMesh& whiteMesh, BallMesh& blackMesh)
     CreateBallMesh(blackMesh, blackVertices);
 }
 
+// Dibuja el balon en su posicion actual.
 void drawBall(GLint modelLoc, GLint textureModeLoc, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texWhite, GLuint texBlack, float rotation, glm::vec3 position)
@@ -2413,12 +2502,14 @@ void drawBall(GLint modelLoc, GLint textureModeLoc, const glm::mat4& scene,
     glUniform1i(textureModeLoc, 0);
 }
 
+// Libera los recursos del balon.
 void deleteBallMesh(BallMesh& mesh)
 {
     glDeleteVertexArrays(1, &mesh.VAO);
     glDeleteBuffers(1, &mesh.VBO);
 }
 
+// Dibuja una esfera con una textura.
 void drawSolidSphere(GLint modelLoc, const glm::mat4& parent, glm::vec3 position,
     glm::vec3 size, const BallMesh& whiteMesh, const BallMesh& blackMesh, GLuint texture)
 {
@@ -2434,6 +2525,7 @@ void drawSolidSphere(GLint modelLoc, const glm::mat4& parent, glm::vec3 position
     glBindVertexArray(0);
 }
 
+// Dibuja los arboles alrededor del estadio.
 void drawTrees(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texBark, GLuint texLeavesDark, GLuint texLeavesLight)
@@ -2458,6 +2550,7 @@ void drawTrees(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
     }
 }
 
+// Dibuja un pajaro en movimiento.
 void drawBird(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint texBird, GLuint texBeak, float elapsed)
@@ -2501,6 +2594,7 @@ void drawBird(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4&
     glUniform1i(textureModeLoc, 0);
 }
 
+// Dibuja los fuegos artificiales.
 void drawFireworks(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     float elapsed, GLuint texGold, GLuint texBlue, GLuint texRed, GLuint texWhite)
 {
@@ -2540,6 +2634,7 @@ void drawFireworks(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     }
 }
 
+// Actualiza el recorrido de los autobuses.
 void updateBusAnimation()
 {
     if (!busAssetsReady || !arrivalStarted) return;
@@ -2582,6 +2677,7 @@ void updateBusAnimation()
     }
 }
 
+// Lee las posiciones y tamanos de las ruedas.
 bool loadBusWheelData(const char* filePath)
 {
     std::ifstream fileStream(filePath);
@@ -2609,6 +2705,7 @@ bool loadBusWheelData(const char* filePath)
     return true;
 }
 
+// Obtiene la posicion de la camara seleccionada.
 glm::vec3 getBroadcastPosition()
 {
     if (activeCamera == 9)
@@ -2633,6 +2730,7 @@ glm::vec3 getBroadcastPosition()
     return freeCameraPosition;
 }
 
+// Calcula la vista de la camara.
 glm::mat4 getBroadcastView()
 {
     if (activeCamera == 9)
@@ -2646,6 +2744,7 @@ glm::mat4 getBroadcastView()
         glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
+// Dibuja las torres de iluminacion.
 void drawFloodlightTowers(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     const glm::mat4& scene, GLuint texMetal)
 {
@@ -2671,6 +2770,7 @@ void drawFloodlightTowers(GLint modelLoc, GLint textureModeLoc, GLuint VAO,
     glUniform1i(textureModeLoc, 0);
 }
 
+// Dibuja los paneles de las luces.
 void drawFloodlightPanels(GLint modelLoc, GLuint VAO)
 {
     glBindVertexArray(VAO);
@@ -2695,6 +2795,7 @@ void drawFloodlightPanels(GLint modelLoc, GLuint VAO)
     glBindVertexArray(0);
 }
 
+// Dibuja las camaras que siguen la accion.
 void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* cameraBase, Model* cameraHead)
 {
     if (!cameraBase || !cameraHead) return;
@@ -2729,6 +2830,7 @@ void drawBroadcastCameraModels(GLint modelLoc, Shader& lightingShader, Model* ca
     glUniform1i(neutralCameraLoc, 0);
 }
 
+// Dibuja las gradas del estadio.
 void drawBleachers(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     GLuint texConcrete, GLuint texSideWall, GLuint texWood, GLuint texWalkway, GLuint texMetal)
 {
@@ -2771,6 +2873,7 @@ void drawBleachers(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::
     }
 }
 
+// Dibuja al publico en las gradas.
 void drawCrowd(GLint modelLoc, GLuint VAO, GLuint jerseyVAO, GLuint headVAO,
     const glm::mat4& scene, GLuint texPumas, GLuint texAtlante,
     GLuint texHead, const GLuint crowdHeads[4], GLuint texPumasShorts, GLuint texAtlanteShorts,
@@ -2834,6 +2937,7 @@ void drawCrowd(GLint modelLoc, GLuint VAO, GLuint jerseyVAO, GLuint headVAO,
     }
 }
 
+// Dibuja el dron y sus helices.
 void drawDrone(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     glm::vec3 position, glm::vec3 target, float elapsed,
@@ -2884,6 +2988,7 @@ void drawDrone(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4
     glUniform1i(textureModeLoc, 0);
 }
 
+// Dibuja el trofeo del partido.
 void drawTrophy(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     float elapsed, GLuint texGold, GLuint texBase, GLuint texWhite)
@@ -2926,6 +3031,7 @@ void drawTrophy(GLint modelLoc, GLint textureModeLoc, GLuint VAO, const glm::mat
     glUniform1i(textureModeLoc, 0);
 }
 
+// Dibuja un numero en el marcador.
 void drawScoreDigit(GLint modelLoc, GLuint VAO, const glm::mat4& matrix,
     int digit, float x, float y, float z, float width, GLuint texture)
 {
@@ -2946,6 +3052,7 @@ void drawScoreDigit(GLint modelLoc, GLuint VAO, const glm::mat4& matrix,
     }
 }
 
+// Obtiene el patron para dibujar una letra.
 const char* getScoreGlyph(char letter, int row)
 {
     static const char* P[] = { "11110","10001","10001","11110","10000","10000","10000" };
@@ -2973,6 +3080,7 @@ const char* getScoreGlyph(char letter, int row)
     return data[row];
 }
 
+// Dibuja una palabra en el marcador.
 void drawScoreWord(GLint modelLoc, GLuint VAO, const glm::mat4& matrix,
     const std::string& word, float x, float y, float z, float dot, GLuint texture)
 {
@@ -2989,6 +3097,7 @@ void drawScoreWord(GLint modelLoc, GLuint VAO, const glm::mat4& matrix,
     }
 }
 
+// Dibuja el marcador y los resultados de penales.
 void drawMatchScoreboard(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     const BallMesh& whiteMesh, const BallMesh& blackMesh,
     GLuint dark, GLuint white, GLuint gold, GLuint red, GLuint green, GLuint pending)
@@ -3056,6 +3165,7 @@ void drawMatchScoreboard(GLint modelLoc, GLuint VAO, const glm::mat4& scene,
     }
 }
 
+// Crea el efecto visual para cambiar de escena.
 GLuint createFadeProgram()
 {
     const char* vs = "#version 330 core\nlayout(location=0) in vec2 p;\nvoid main(){gl_Position=vec4(p,0.0,1.0);}\n";
@@ -3075,6 +3185,7 @@ GLuint createFadeProgram()
     return program;
 }
 
+// Dibuja la capa de transicion en pantalla.
 void drawFadeOverlay(GLuint program, GLuint vao)
 {
     if (fadeAlpha <= 0.0f) return;
