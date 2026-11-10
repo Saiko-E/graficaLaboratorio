@@ -13,23 +13,46 @@ celebración con fuegos artificiales. Está desarrollado en C++ y OpenGL 3.3.
 
 ## Cómo ejecutar en Linux
 
-Necesitas una tarjeta gráfica y controladores con **OpenGL 3.3** o superior. En
-Ubuntu/Debian, desde la raíz del repositorio instala el compilador y las
-bibliotecas necesarias y compila:
+Estas instrucciones son para **Ubuntu o Debian**. Necesitas una sesión gráfica,
+una GPU compatible con **OpenGL 3.3** o superior y sus controladores instalados.
+El `.exe` de `dist/` es solo para Windows: en Linux hay que compilar el código.
 
-```bash
-sudo apt update
-sudo apt install build-essential pkg-config libglfw3-dev libglew-dev libglm-dev libassimp-dev
-cd Configinicial
-./build.sh
-./graficaLaboratorio
-```
+1. Descarga el proyecto desde GitHub (**Code → Download ZIP** y extrae el ZIP),
+   o clónalo:
 
-`build.sh` compila SOIL2 (incluido en el proyecto) y genera el ejecutable Linux
-`Configinicial/graficaLaboratorio`; **no ejecuta el `.exe` de Windows**. Ejecuta
-el programa desde `Configinicial/`: `Shader/` y `Models/` se cargan con rutas
-relativas. Para volver a abrirlo después de compilar: `cd Configinicial &&
-./graficaLaboratorio` desde la raíz del repositorio.
+   ```bash
+   git clone https://github.com/Saiko-E/graficaLaboratorio.git
+   cd graficaLaboratorio
+   ```
+
+   Si usaste el ZIP, abre una terminal en la carpeta extraída que contiene este
+   `README.md` en lugar de ejecutar los comandos `git clone` y `cd` anteriores.
+
+2. Instala las herramientas y bibliotecas de compilación:
+
+   ```bash
+   sudo apt update
+   sudo apt install build-essential pkg-config libglfw3-dev libglew-dev libglm-dev libassimp-dev
+   ```
+
+3. Desde la carpeta del proyecto, compila y ejecuta:
+
+   ```bash
+   cd Configinicial
+   ./build.sh
+   ./graficaLaboratorio
+   ```
+
+`build.sh` compila SOIL2 (incluido en el repositorio) y crea
+`Configinicial/graficaLaboratorio`. Para abrirlo de nuevo **no necesitas
+recompilar**: desde la raíz del proyecto ejecuta `cd Configinicial` y luego
+`./graficaLaboratorio`. Debes iniciarlo desde `Configinicial/`, porque busca
+`Shader/` y `Models/` mediante rutas relativas.
+
+Si `./build.sh` indica *Permission denied*, usa `bash build.sh`. Si faltan
+bibliotecas al compilar, revisa que el paso 2 terminara sin errores. Si el
+programa no abre una ventana, comprueba que estés en una sesión gráfica y que
+tus controladores soporten OpenGL 3.3.
 
 ## Cómo ejecutar en Windows
 
@@ -82,7 +105,6 @@ Copia o comprime **toda la carpeta `dist\graficaLaboratorio`** y extráela en el
 - **No aparecen modelos o texturas, o hay errores al cargar shaders:** comprueba que las carpetas `Models` y `Shader` conserven su contenido y estén junto al `.exe`.
 - **No se abre la ventana o aparece un error de OpenGL:** actualiza los controladores de la tarjeta gráfica y verifica que el equipo soporte OpenGL 3.3.
 - **La cámara no se mueve:** pulsa `0` para activar la cámara libre antes de usar `W/A/S/D` y el ratón.
-- **Linux: no compila o faltan bibliotecas:** instala los paquetes indicados arriba y ejecuta `./build.sh` desde `Configinicial/`.
 
 ## Código fuente
 
