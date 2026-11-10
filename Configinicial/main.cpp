@@ -9,6 +9,14 @@
 #include <sstream>
 #include <memory>
 
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <filesystem>
+#include <windows.h>
+#endif
+
 #include <GL/glew.h>
 
 #include <GLFW/glfw3.h>
@@ -546,6 +554,24 @@ float animationClock = 0.0f;
 
 int main()
 {
+#ifdef _WIN32
+    // Las rutas de modelos y shaders se resuelven junto al ejecutable.
+    std::vector<wchar_t> executablePath(32768);
+    DWORD pathLength = GetModuleFileNameW(nullptr, executablePath.data(),
+        static_cast<DWORD>(executablePath.size()));
+    if (pathLength == 0 || pathLength >= executablePath.size()) {
+        std::cerr << "No se pudo localizar la carpeta del ejecutable." << std::endl;
+        return EXIT_FAILURE;
+    }
+    std::error_code pathError;
+    std::filesystem::current_path(
+        std::filesystem::path(executablePath.data()).parent_path(), pathError);
+    if (pathError) {
+        std::cerr << "No se pudo abrir la carpeta del ejecutable: "
+            << pathError.message() << std::endl;
+        return EXIT_FAILURE;
+    }
+#endif
     glfwInit();
 
     GLFWwindow* window = glfwCreateWindow(
